@@ -21,6 +21,6 @@ public interface IGameModel
         Left
     }
     
-    void MovePlayer(Direction dir);
+    void MovesPlayer(Direction[] dir);
     void UpdateLogic();
 }

@@ -6,7 +6,7 @@ namespace ProjectGame;
 
 public class AllMovesEventArgs : EventArgs //
 {
-    public IGameModel.Direction Direction { get; set; }
+    public IGameModel.Direction[] Direction { get; set; }
 }
 
 public interface IGameView

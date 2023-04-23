@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -49,20 +50,37 @@ public class GameCycleView : Game, IGameView
     protected override void Update(GameTime gameTime)
     {
         var keysState = Keyboard.GetState();
-        
         var keysPressed = keysState.GetPressedKeys();
-        if (keysPressed.Length > 0)
-        {
-            var key = keysPressed.First();
-            
-            //var isKeyDown = keysState.IsKeyDown(key);
+        
+        var directions = new List<IGameModel.Direction>();
 
+        foreach (var key in keysPressed)
+        {
             switch (key)
             {
                 case Keys.Escape:
                     Exit();
                     break;
+                case Keys.W:
+                    directions.Add(IGameModel.Direction.Up);
+                    break;
+                case Keys.S:
+                    directions.Add(IGameModel.Direction.Down);
+                    break;
+                case Keys.A:
+                    directions.Add(IGameModel.Direction.Left);
+                    break;
+                case Keys.D:
+                    directions.Add(IGameModel.Direction.Right);
+                    break;
             }
+        }
+        
+        if (directions.Count > 0)
+        {
+            var allDirections = directions.ToArray();
+
+            PlayerMoved.Invoke(this, new AllMovesEventArgs { Direction = allDirections });
         }
 
         base.Update(gameTime);

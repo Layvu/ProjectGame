@@ -29,7 +29,7 @@ public class GamePresenter
 
     private void ViewModelMovePlayer(object sender, AllMovesEventArgs e)
     {
-        _gameModel.MovePlayer(e.Direction);
+        _gameModel.MovesPlayer(e.Direction);
     }
 
     private void ViewModelUpdate(object sender, EventArgs e)
