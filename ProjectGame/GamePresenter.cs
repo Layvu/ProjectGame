@@ -23,13 +23,15 @@ public class GamePresenter
 
         _gameModel.Updated += ModelViewUpdate;
         
-        _gameView.PlayerMoved += ViewModelMovePlayer;
+        _gameView.PlayerMovesChanged += ViewModelMovePlayer;
         _gameView.CycleFinished += ViewModelUpdate;
+        
+        _gameModel.Initialize(); //Инициализируем игровой цикл
     }
 
     private void ViewModelMovePlayer(object sender, AllMovesEventArgs e)
     {
-        _gameModel.MovesPlayer(e.Direction);
+        _gameModel.ChangesPlayerMoves(e.Direction);
     }
 
     private void ViewModelUpdate(object sender, EventArgs e)
@@ -37,8 +39,8 @@ public class GamePresenter
         _gameModel.UpdateLogic();
     }
     
-    private void ModelViewUpdate(object sender, AllGameEventArgs e)
+    private void ModelViewUpdate(object sender, GameEventArgs e)
     {
-        _gameView.LoadRenderingParameters(e.PlayerPosition);
+        _gameView.LoadRenderingParameters(e.Entities, e.VisualShift);
     }
 }

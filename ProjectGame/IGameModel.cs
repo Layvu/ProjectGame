@@ -1,17 +1,22 @@
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Numerics;
 
 namespace ProjectGame;
 
-public class AllGameEventArgs : EventArgs //
+public class GameEventArgs : EventArgs //
 {
-    public Vector2 PlayerPosition { get; set; }
+    public Dictionary<int, IEntity> Entities { get; set; }    
+    public Vector2 VisualShift { get; set; }
 }
 
 public interface IGameModel
 {
-    event EventHandler<AllGameEventArgs> Updated;
+    event EventHandler<GameEventArgs> Updated;
+    
+    int PlayerId { get; set; }
+    Dictionary<int, IEntity> Entities { get; set; }
 
     public enum Direction : byte
     {
@@ -21,6 +26,7 @@ public interface IGameModel
         Left
     }
     
-    void MovesPlayer(Direction[] dir);
+    void ChangesPlayerMoves(Direction[] dir);
     void UpdateLogic();
+    void Initialize();
 }

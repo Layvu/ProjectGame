@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Numerics;
 
@@ -11,9 +12,9 @@ public class AllMovesEventArgs : EventArgs //
 
 public interface IGameView
 {
-    event EventHandler<AllMovesEventArgs> PlayerMoved;
+    event EventHandler<AllMovesEventArgs> PlayerMovesChanged;
     event EventHandler CycleFinished;
     
-    void LoadRenderingParameters(Vector2 position);
+    void LoadRenderingParameters(Dictionary<int, IEntity> entities, Vector2 visualShift);
     void Run();
 }

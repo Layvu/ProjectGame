@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -13,15 +12,20 @@ public class GameCycleView : Game, IGameView
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     
-    public event EventHandler<AllMovesEventArgs> PlayerMoved; 
+    public event EventHandler<AllMovesEventArgs> PlayerMovesChanged; 
     public event EventHandler CycleFinished;
     
-    private Vector2 _playerPosition = Vector2.Zero;
-    private Texture2D _playerImage;
+    public Texture2D _playerImage;
+
+    private Vector2 _visualShift = Vector2.Zero;
     
-    public void LoadRenderingParameters(Vector2 position)
+    private Dictionary<int, IEntity> _entities = new();
+    private readonly Dictionary<int, Texture2D> _textures = new();
+
+    public void LoadRenderingParameters(Dictionary<int, IEntity> entities, Vector2 visualShift)
     {
-        _playerPosition = position;
+        _entities = entities;
+        _visualShift += visualShift;
     }
 
     public GameCycleView()
@@ -33,18 +37,27 @@ public class GameCycleView : Game, IGameView
 
     protected override void Initialize()
     {
-        // TODO: Add your initialization logic here
-
         base.Initialize();
+        
+        // TODO: Add your initialization logic here
+        var adapter = GraphicsAdapter.DefaultAdapter;
+        _graphics.PreferredBackBufferWidth = adapter.CurrentDisplayMode.Width;
+        _graphics.PreferredBackBufferHeight = adapter.CurrentDisplayMode.Height;
+        _graphics.IsFullScreen = false;
+        _graphics.ApplyChanges();
+
+        //начало координат 
+        _visualShift.X -= _graphics.PreferredBackBufferWidth / 2;
+        _visualShift.Y -= _graphics.PreferredBackBufferHeight * 0.87f;
     }
 
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        
         // TODO: use this.Content to load your game content here
         
-        _playerImage = Content.Load<Texture2D>("image");
+        _textures.Add((byte)GameCycleModel.EntityTypes.Player, Content.Load<Texture2D>("player"));
+        _textures.Add((byte)GameCycleModel.EntityTypes.Wall, Content.Load<Texture2D>("wall"));
     }
 
     protected override void Update(GameTime gameTime)
@@ -80,7 +93,7 @@ public class GameCycleView : Game, IGameView
         {
             var allDirections = directions.ToArray();
 
-            PlayerMoved.Invoke(this, new AllMovesEventArgs { Direction = allDirections });
+            PlayerMovesChanged.Invoke(this, new AllMovesEventArgs { Direction = allDirections });
         }
 
         base.Update(gameTime);
@@ -90,11 +103,18 @@ public class GameCycleView : Game, IGameView
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
-        base.Draw(gameTime);
 
-        // TODO: Add your drawing code here
         _spriteBatch.Begin();
-        _spriteBatch.Draw(_playerImage, _playerPosition, Color.White);
+        
+        foreach (var entity in _entities.Values)
+        {
+            var texture = _textures[entity.ImageId];
+            var centerPosition = entity.Position - new Vector2(texture.Width, texture.Height) / 2;
+            _spriteBatch.Draw(texture, centerPosition - _visualShift, Color.White);
+        }
+
         _spriteBatch.End();
+
+        base.Draw(gameTime);
     }
 }
