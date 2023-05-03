@@ -1,13 +1,36 @@
-using System.Numerics;
+using Microsoft.Xna.Framework;
 
 namespace ProjectGame;
 
-class Wall : IEntity
+public class Wall : IEntity, ISolid
 {
+    public Wall(Vector2 position)
+    {
+        Position = position;
+        Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 50, 50);
+        Width = 50;
+        Height = 50;
+    }
+    
     public int ImageId { get; set; }
-    public Vector2 Position { get; set; }
-  
+    public Vector2 Position { get; private set; }
+    public Vector2 Moving { get; set; }
+    public RectangleCollider Collider { get; set; }
+    public int Width { get; } //
+    public int Height { get; } //
+    
+    public int Id { get; set; } //
+
     public void Update()
     {
+    }
+
+    public void Move(Vector2 pos)
+    {
+    }
+
+    public void MoveCollider(Vector2 newPosition)
+    {
+        Collider = new RectangleCollider((int)newPosition.X, (int)newPosition.Y, 50, 50);
     }
 }
