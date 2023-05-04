@@ -1,139 +1,158 @@
+#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework;
 
 namespace ProjectGame;
 
-// Инициализируем его объектами
-// Далее если объект изменился вызываем Replace от старого и нового значения
-// Если же нам нужны ближайшие объекты к какому-то объекту - вызываем Retrieve
-// Вставить новый объект в дерево - Insert
-// Остальные методы по большей части служебные
 public class QuadTree
 {
-    private const int MaxObjectsPerNode = 4;
-    private const int MaxLevels = 8;
+    private readonly List<ISolid> _elements = new();
+    private readonly int _bucketCapacity;
+    private readonly int _maxDepth;
+    private QuadTree? _topLeft, _topRight, _bottomLeft, _bottomRight;
 
-    private readonly int _currentLevel;
-    private readonly List<IEntity> _objects;
-    private readonly Rectangle _bounds;
-    private readonly QuadTree[] _nodes;
+    public QuadTree(Rectangle bounds) : this(bounds, 4, 8){}
 
-    public QuadTree(Rectangle bounds, int level = 0)
+    private QuadTree(Rectangle bounds, int bucketCapacity, int maxDepth)
     {
-        _currentLevel = level;
-        _objects = new List<IEntity>();
-        _bounds = bounds;
-        _nodes = new QuadTree[4];
+        _bucketCapacity = bucketCapacity;
+        _maxDepth = maxDepth;
+     
+        Bounds = bounds; // игровая область на экране
     }
 
-    public void Insert(IEntity entity)
+    private Rectangle Bounds { get; }
+
+    private int Level { get; set; }
+
+    private bool IsLeaf
+        => _topLeft == null || _topRight == null || _bottomLeft == null || _bottomRight == null;
+
+    public void Insert(ISolid element)
     {
-        if (_nodes[0] != null) // узел имеет дочерние узлы
+        if (element == null || !Bounds.Contains(element.Collider.Boundary))
+            throw new ArgumentNullException();
+
+        // узел, превышающий допустимую емкость, будет разбит
+        if (_elements.Count >= _bucketCapacity) Split();
+
+        var containingChild = GetContainingChild(element.Collider.Boundary);
+        
+        if (containingChild == null) _elements.Add(element);
+        else containingChild.Insert(element);
+    }
+
+    private void Split()
+    {  
+        if (!IsLeaf || Level + 1 > _maxDepth) return;
+ 
+        _topLeft = CreateChild(Bounds.Location);
+        _topRight = CreateChild(new Point(Bounds.Center.X, Bounds.Location.Y));
+        _bottomLeft = CreateChild(new Point(Bounds.Location.X, Bounds.Center.Y));
+        _bottomRight = CreateChild(new Point(Bounds.Center.X, Bounds.Center.Y));
+ 
+        var elements = _elements.ToList();
+        foreach (var element in elements)
         {
-            var index = GetIndex(entity); // принадлежность к одному из дочерних узлов
-            if (index != -1)
-            {
-                _nodes[index].Insert(entity);
-                return;
+            var containingChild = GetContainingChild(element.Collider.Boundary);
+            if (containingChild != null) // если помещается
+            {   
+                _elements.Remove(element);
+                containingChild.Insert(element);
             }
         }
-
-        _objects.Add(entity);
-
-        if (_objects.Count > MaxObjectsPerNode && _currentLevel < MaxLevels)
-        {
-            if (_nodes[0] == null) SplitNode();
-
-            var i = 0;
-            while (i < _objects.Count)
-            {
-                var index = GetIndex(_objects[i]); // проверяется на принадлежность к дочерним узлам
-                if (index != -1)
-                {
-                    _nodes[index].Insert(_objects[i]);
-                    _objects.RemoveAt(i);
-                }
-                else i++;
-            }
-        }
     }
 
-    public List<IEntity> Retrieve(IEntity entity)
+    private QuadTree CreateChild(Point location)
     {
-        var result = new List<IEntity>();
-        var index = GetIndex(entity);
-        if (index != -1 && _nodes[0] != null)
-            result.AddRange(_nodes[index].Retrieve(entity));
-        result.AddRange(_objects);
-
-        return result;
+        return new QuadTree(
+            new Rectangle(location, new Point(Bounds.Size.X / 2, Bounds.Size.Y / 2)), 
+            _bucketCapacity, _maxDepth)
+        {
+            Level = Level + 1
+        };
     }
 
-    private void SplitNode()
+    public bool Remove(ISolid element)
     {
-        var subWidth = _bounds.Width / 2;
-        var subHeight = _bounds.Height / 2;
-        var x = _bounds.X;
-        var y = _bounds.Y;
+        if (element == null) throw new ArgumentNullException();
 
-        _nodes[0] = new QuadTree(new Rectangle(x + subWidth, y, subWidth, subHeight), _currentLevel + 1);
-        _nodes[1] = new QuadTree(new Rectangle(x, y, subWidth, subHeight), _currentLevel + 1);
-        _nodes[2] = new QuadTree(new Rectangle(x, y + subHeight, subWidth, subHeight), _currentLevel + 1);
-        _nodes[3] = new QuadTree(new Rectangle(x + subWidth, y + subHeight, subWidth, subHeight), _currentLevel + 1);
+        var containingChild = GetContainingChild(element.Collider.Boundary);
+        
+        var removed = containingChild?.Remove(element) ?? _elements.Remove(element);
+        if (removed && CountElements() <= _bucketCapacity) Merge();
+ 
+        return removed;
+    }
+    
+    private QuadTree? GetContainingChild(Rectangle bounds) // IShape
+    {
+        if (IsLeaf) return null;
+        
+        if (_topLeft.Bounds.Contains(bounds)) return _topLeft;
+        if (_topRight.Bounds.Contains(bounds)) return _topRight;
+        if (_bottomLeft.Bounds.Contains(bounds)) return _bottomLeft;
+        return _bottomRight.Bounds.Contains(bounds) ? _bottomRight : null;
     }
 
-    private int GetIndex(IEntity entity)
+    private int CountElements() 
     {
-        var verticalMidpoint = _bounds.X + _bounds.Width / 2;
-        var horizontalMidpoint = _bounds.Y + _bounds.Height / 2;
+        var count = _elements.Count;
+        if (IsLeaf) return count;
+        
+        count += _topLeft.CountElements();
+        count += _topRight.CountElements();
+        count += _bottomLeft.CountElements();
+        count += _bottomRight.CountElements();
 
-        var topQuadrant = entity.Position.Y < horizontalMidpoint &&
-                          entity.Position.Y + entity.Height < horizontalMidpoint;
-        var bottomQuadrant = entity.Position.Y > horizontalMidpoint;
-
-        if (entity.Position.X < verticalMidpoint && entity.Position.X + entity.Width < verticalMidpoint)
-        {
-            if (topQuadrant) return 1;
-            if (bottomQuadrant) return 2;
-        }
-        else if (entity.Position.X > verticalMidpoint)
-        {
-            if (topQuadrant) return 0;
-            if (bottomQuadrant) return 3;
-        }
-
-        return -1;
+        return count;
     }
-
-    public void Update(IEntity entity) //
+    
+    private void Merge()
     {
-        var objectsInSameQuad = Retrieve(entity);
-        var oldEntity = objectsInSameQuad.FirstOrDefault(e => e.Id == entity.Id);
-
-        if (oldEntity != null)
-        {
-            Replace(oldEntity, entity);
-        }
-        else
-        {
-            Insert(entity);
-        }
+        if (IsLeaf) return;
+ 
+        _elements.AddRange(_topLeft._elements);
+        _elements.AddRange(_topRight._elements);
+        _elements.AddRange(_bottomLeft._elements);
+        _elements.AddRange(_bottomRight._elements);
+ 
+        _topLeft = _topRight = _bottomLeft = _bottomRight = null;
     }
-
-    public void Replace(IEntity oldEntity, IEntity newEntity) //
+    
+    public IEnumerable<ISolid> FindCollisions(ISolid element)
     {
-        if (!_objects.Contains(oldEntity) && _nodes[0] != null)
+        if (element == null) throw new ArgumentNullException();
+        
+        var nodes = new Queue<QuadTree>();
+        var collisions = new List<ISolid>();
+ 
+        nodes.Enqueue(this); 
+ 
+        while (nodes.Count > 0)
         {
-            var index = GetIndex(oldEntity);
-            if (index != -1)
-            {
-                _nodes[index].Replace(oldEntity, newEntity);
-                return;
-            }
-        }
+            var node = nodes.Dequeue();
+ 
+            if (!element.Collider.Boundary.Intersects(node.Bounds)) continue;
+            
+            collisions.AddRange(
+                node._elements.Where(e => e.Collider.Boundary.Intersects(element.Collider.Boundary))
+                );
 
-        _objects.Remove(oldEntity);
-        Insert(newEntity);
+            if (node.IsLeaf) continue;
+            
+            if (element.Collider.Boundary.Intersects(node._topLeft.Bounds))
+                nodes.Enqueue(node._topLeft);
+            if (element.Collider.Boundary.Intersects(node._topRight.Bounds))
+                nodes.Enqueue(node._topRight);
+            if (element.Collider.Boundary.Intersects(node._bottomLeft.Bounds))
+                nodes.Enqueue(node._bottomLeft);
+            if (element.Collider.Boundary.Intersects(node._bottomRight.Bounds))
+                nodes.Enqueue(node._bottomRight);
+        }
+ 
+        return collisions;
     }
 }

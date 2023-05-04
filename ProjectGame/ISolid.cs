@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 
 namespace ProjectGame;
 
-public interface ISolid
+public interface ISolid : IEntity
 {
     RectangleCollider Collider { get; set; }
     void MoveCollider(Vector2 newPosition);

@@ -8,17 +8,13 @@ public class Wall : IEntity, ISolid
     {
         Position = position;
         Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 50, 50);
-        Width = 50;
-        Height = 50;
     }
     
     public int ImageId { get; set; }
     public Vector2 Position { get; private set; }
     public Vector2 Moving { get; set; }
     public RectangleCollider Collider { get; set; }
-    public int Width { get; } //
-    public int Height { get; } //
-    
+
     public int Id { get; set; } //
 
     public void Update()

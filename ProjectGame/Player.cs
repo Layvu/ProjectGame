@@ -8,8 +8,6 @@ public class Player : IEntity, ISolid
     {
         Position = position;
         Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 39, 50);
-        Width = 39;
-        Height = 50;
     }
 
     public int ImageId { get; set; }
@@ -17,8 +15,6 @@ public class Player : IEntity, ISolid
     public Vector2 Moving { get; set; }
     public float Friction { get; set; }
     public RectangleCollider Collider { get; set; }
-    public int Width { get; } //
-    public int Height { get; } //
     
     public int Id { get; set; } //
 
@@ -29,7 +25,7 @@ public class Player : IEntity, ISolid
 
         Move(Position + Moving);
     }
-    
+
     public void MoveCollider(Vector2 newPosition)
     {
         Collider = new RectangleCollider((int)newPosition.X, (int)newPosition.Y, 39, 50);

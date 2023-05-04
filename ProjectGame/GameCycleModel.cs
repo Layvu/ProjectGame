@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -25,9 +26,9 @@ public class GameCycleModel : IGameModel
     {
         Entities = new Dictionary<int, IEntity>();
         _map = GenerateMap();
-        _quadTree = new QuadTree(
-            new Rectangle(0, 0, _map.GetLength(0), 
-                _map.GetLength(1))
+        _quadTree = new QuadTree(new Rectangle(0, 0, 
+                _map.GetLength(0) * _tileSize, 
+                _map.GetLength(1) * _tileSize)
             );
     }
 
@@ -39,6 +40,7 @@ public class GameCycleModel : IGameModel
     
     public void ChangesPlayerMoves(IGameModel.Direction[] directions)
     {
+        const int speed = 3;
         var player = (Player)Entities[PlayerId];
         
         player.Moving = Vector2.Zero;
@@ -47,16 +49,16 @@ public class GameCycleModel : IGameModel
             switch (dir)
             {
                 case IGameModel.Direction.Up:
-                    player.Moving += new Vector2(0, -1);
+                    player.Moving += new Vector2(0, -speed);
                     break;
                 case IGameModel.Direction.Down:
-                    player.Moving += new Vector2(0, 1);
+                    player.Moving += new Vector2(0, speed);
                     break;
                 case IGameModel.Direction.Right:
-                    player.Moving += new Vector2(1, 0);
+                    player.Moving += new Vector2(speed, 0);
                     break;
                 case IGameModel.Direction.Left:
-                    player.Moving += new Vector2(-1, 0);
+                    player.Moving += new Vector2(-speed, 0);
                     break;
             }
         }
@@ -70,6 +72,8 @@ public class GameCycleModel : IGameModel
         var map = new char[mapWidth, mapHeight];
 
         // границы
+        map[mapWidth / 2, mapHeight - 2] = 'P';
+        map[mapWidth / 2 + 5, mapHeight - 5] = 'W';
         for (var x = 0; x < mapWidth; x++)
         {
             map[x, 0] = 'W';
@@ -81,9 +85,6 @@ public class GameCycleModel : IGameModel
             map[mapWidth - 1, y] = 'W';
         }
         
-        map[mapWidth / 2 + 5, mapHeight - 5] = 'W';
-        map[mapWidth / 2, mapHeight - 2] = 'P';
-
         return map;
     }
 
@@ -106,12 +107,12 @@ public class GameCycleModel : IGameModel
                 isPlacedPlayer = true;
             }
 
-            generatedEntity.Id = _currentId; //
+            generatedEntity.Id = _currentId;
             Entities.Add(_currentId, generatedEntity);
             _currentId++;
             
-            if (generatedEntity is ISolid) //
-                _quadTree.Insert(generatedEntity); //
+            if (generatedEntity is ISolid generatedSolid)
+                _quadTree.Insert(generatedSolid);
         }
         
         Updated.Invoke(this, new GameEventArgs()
@@ -171,34 +172,12 @@ public class GameCycleModel : IGameModel
         {
             var initialPosition = Entities[entityId].Position;
             positionsBeforeUpdate.Add(entityId, initialPosition);
-
+            
             Entities[entityId].Update();
-            Entities[entityId].Update();
-            //_quadTree.Update(Entities[entityId]); // Обновляем позицию объектов в квадранте
         }
-
-        // Обрабатываем столкновения объектов в квадранте
-        foreach (var entityId in Entities.Keys)
-        {
-            if (Entities[entityId] is ISolid solid1)
-            {
-                var objectsInSameQuad = _quadTree.Retrieve(Entities[entityId]);
-                foreach (var entity2 in objectsInSameQuad)
-                {
-                    if (entityId == entity2.Id) continue;
-                    if (entity2 is ISolid solid2)
-                    {
-                        if (RectangleCollider.IsCollided(solid1.Collider, solid2.Collider))
-                        {
-                            CalculateObstacleCollision3(
-                                (positionsBeforeUpdate[entityId], entityId),
-                                (positionsBeforeUpdate[entity2.Id], entity2.Id)
-                            );
-                        }
-                    }
-                }
-            }
-        }
+        
+        // Обрабатываем столкновения
+        collisionHandling(positionsBeforeUpdate);
 
         Updated.Invoke(this, new GameEventArgs
         {
@@ -207,37 +186,35 @@ public class GameCycleModel : IGameModel
         });
     }
 
-    private void CalculateObstacleCollision3( //
-        (Vector2 initPos, int Id) entity1,
-        (Vector2 initPos, int Id) entity2)
+    private void collisionHandling(Dictionary<int, Vector2> positionsBeforeUpdate)
     {
-        var isCollided = false;
-        if (Entities[entity1.Id] is ISolid p1 && Entities[entity2.Id] is ISolid p2)
+        var firstEntityBefore = positionsBeforeUpdate[PlayerId];
+        
+        var player = Entities[PlayerId] as Player;
+        var collidingObjects = _quadTree.FindCollisions(player);
+        foreach (var entity2 in collidingObjects)
         {
-            var oppositeDirection = new Vector2(0, 0);
-            while (RectangleCollider.IsCollided(p1.Collider, p2.Collider))
+            if (PlayerId == entity2.Id) continue;
+            
+            var secondEntity = Entities[entity2.Id];
+            if (secondEntity is ISolid solid2)
             {
-                isCollided = true;
-                if (entity1.initPos != Entities[entity1.Id].Position)
+                if (RectangleCollider.IsCollided(player.Collider, solid2.Collider))
                 {
-                    oppositeDirection = Entities[entity1.Id].Position - entity1.initPos;
-                    oppositeDirection.Normalize();
-                    Entities[entity1.Id].Move(Entities[entity1.Id].Position - oppositeDirection);
-                }
+                    _quadTree.Remove(player);
 
-                if (entity2.initPos != Entities[entity2.Id].Position)
-                {
-                    oppositeDirection = Entities[entity2.Id].Position - entity2.initPos;
-                    oppositeDirection.Normalize();
-                    Entities[entity2.Id].Move(Entities[entity2.Id].Position - oppositeDirection);
+                    if (firstEntityBefore != player.Position)
+                    {
+                        var intersects = Rectangle.Intersect(player.Collider.Boundary, solid2.Collider.Boundary);
+                        if (intersects.Width > intersects.Height)
+                            player.Move(new Vector2(player.Position.X, firstEntityBefore.Y));
+                        else if (intersects.Width < intersects.Height)
+                            player.Move(new Vector2(firstEntityBefore.X, player.Position.Y));
+                    }
+
+                    _quadTree.Insert(player);
                 }
             }
-        }
-
-        if (isCollided)
-        {
-            Entities[entity1.Id].Moving = Vector2.Zero;
-            Entities[entity2.Id].Moving = Vector2.Zero;
         }
     }
 }
