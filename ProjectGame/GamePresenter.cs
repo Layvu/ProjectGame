@@ -1,4 +1,5 @@
 using System;
+using Microsoft.Xna.Framework;
 
 namespace ProjectGame;
 
@@ -34,9 +35,9 @@ public class GamePresenter
         _gameModel.ChangesPlayerMoves(e.Direction);
     }
 
-    private void ViewModelUpdate(object sender, EventArgs e)
+    private void ViewModelUpdate(object sender, AllMovesEventArgs e)
     {
-        _gameModel.UpdateLogic();
+        _gameModel.UpdateLogic(e.gameTime);
     }
     
     private void ModelViewUpdate(object sender, GameEventArgs e)

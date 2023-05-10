@@ -8,6 +8,12 @@ public class Player : IEntity, ISolid
     {
         Position = position;
         Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 39, 50);
+        HasGravity = true;
+        Mass = 3f;
+        Speed = 0.7f;
+        JumpMaxTime = 0.2f;
+        JumpTime = 0f;
+        JumpSpeed = 2f;
     }
 
     public int ImageId { get; set; }
@@ -15,8 +21,18 @@ public class Player : IEntity, ISolid
     public Vector2 Moving { get; set; }
     public float Friction { get; set; }
     public RectangleCollider Collider { get; set; }
-    
-    public int Id { get; set; } //
+    public int Id { get; set; }
+    public bool HasGravity { get; }
+    public float Mass { get; }
+    public float JumpTime { get; set; }
+    public float JumpMaxTime { get; set; }
+    public float Speed { get; set; }
+    public float JumpSpeed { get; set; } 
+
+    public void AddJumpTime(float deltaTime)
+    {
+        if (JumpTime <= JumpMaxTime) JumpTime += deltaTime;
+    }
 
     public void Update()
     {

@@ -12,7 +12,7 @@ public class GameCycleView : Game, IGameView
     private SpriteBatch _spriteBatch;
     
     public event EventHandler<AllMovesEventArgs> PlayerMovesChanged; 
-    public event EventHandler CycleFinished;
+    public event EventHandler<AllMovesEventArgs> CycleFinished;
     
     public Texture2D _playerImage;
 
@@ -76,9 +76,6 @@ public class GameCycleView : Game, IGameView
                 case Keys.W:
                     directions.Add(IGameModel.Direction.Up);
                     break;
-                case Keys.S:
-                    directions.Add(IGameModel.Direction.Down);
-                    break;
                 case Keys.A:
                     directions.Add(IGameModel.Direction.Left);
                     break;
@@ -96,7 +93,7 @@ public class GameCycleView : Game, IGameView
         }
 
         base.Update(gameTime);
-        CycleFinished.Invoke(this, new EventArgs()); // UpdateLogic
+        CycleFinished.Invoke(this, new AllMovesEventArgs { gameTime = gameTime}); // UpdateLogic
     }
 
     protected override void Draw(GameTime gameTime)

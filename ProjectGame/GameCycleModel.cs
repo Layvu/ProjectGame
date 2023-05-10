@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace ProjectGame;
 
-public class GameCycleModel : IGameModel
+public partial class GameCycleModel : IGameModel
 {
     public event EventHandler<GameEventArgs> Updated;
     
@@ -22,6 +21,8 @@ public class GameCycleModel : IGameModel
     
     private readonly QuadTree _quadTree;
 
+    private GameTime CurrentGameTime;
+    
     public GameCycleModel()
     {
         Entities = new Dictionary<int, IEntity>();
@@ -40,25 +41,25 @@ public class GameCycleModel : IGameModel
     
     public void ChangesPlayerMoves(IGameModel.Direction[] directions)
     {
-        const int speed = 3;
         var player = (Player)Entities[PlayerId];
-        
-        player.Moving = Vector2.Zero;
+
         foreach (var dir in directions)
         {
             switch (dir)
             {
                 case IGameModel.Direction.Up:
-                    player.Moving += new Vector2(0, -speed);
-                    break;
-                case IGameModel.Direction.Down:
-                    player.Moving += new Vector2(0, speed);
+                    if (player.JumpTime <= player.JumpMaxTime)
+                    {
+                        var deltaTime = (float)CurrentGameTime.ElapsedGameTime.TotalSeconds;
+                        player.AddJumpTime(deltaTime);
+                        player.Moving += new Vector2(0, -player.JumpSpeed);
+                    }
                     break;
                 case IGameModel.Direction.Right:
-                    player.Moving += new Vector2(speed, 0);
+                    player.Moving += new Vector2(player.Speed, 0);
                     break;
                 case IGameModel.Direction.Left:
-                    player.Moving += new Vector2(-speed, 0);
+                    player.Moving += new Vector2(-player.Speed, 0);
                     break;
             }
         }
@@ -162,59 +163,29 @@ public class GameCycleModel : IGameModel
         return wall;
     }
 
-    public void UpdateLogic()
+    public void UpdateLogic(GameTime gameTime)
     {
+        CurrentGameTime = gameTime;
+        
         var playerInitialPosition = Entities[PlayerId].Position;
         var positionsBeforeUpdate = new Dictionary<int, Vector2>();
 
-        // Обновляем все объекты и сохраняем их начальную позицию
         foreach (var entityId in Entities.Keys)
         {
             var initialPosition = Entities[entityId].Position;
             positionsBeforeUpdate.Add(entityId, initialPosition);
-            
+
+            UpdateGravity(entityId);
+
             Entities[entityId].Update();
         }
         
-        // Обрабатываем столкновения
-        collisionHandling(positionsBeforeUpdate);
+        HandleCollisions(positionsBeforeUpdate);
 
         Updated.Invoke(this, new GameEventArgs
         {
             Entities = this.Entities,
             VisualShift = Entities[PlayerId].Position - playerInitialPosition
         });
-    }
-
-    private void collisionHandling(Dictionary<int, Vector2> positionsBeforeUpdate)
-    {
-        var firstEntityBefore = positionsBeforeUpdate[PlayerId];
-        
-        var player = Entities[PlayerId] as Player;
-        var collidingObjects = _quadTree.FindCollisions(player);
-        foreach (var entity2 in collidingObjects)
-        {
-            if (PlayerId == entity2.Id) continue;
-            
-            var secondEntity = Entities[entity2.Id];
-            if (secondEntity is ISolid solid2)
-            {
-                if (RectangleCollider.IsCollided(player.Collider, solid2.Collider))
-                {
-                    _quadTree.Remove(player);
-
-                    if (firstEntityBefore != player.Position)
-                    {
-                        var intersects = Rectangle.Intersect(player.Collider.Boundary, solid2.Collider.Boundary);
-                        if (intersects.Width > intersects.Height)
-                            player.Move(new Vector2(player.Position.X, firstEntityBefore.Y));
-                        else if (intersects.Width < intersects.Height)
-                            player.Move(new Vector2(firstEntityBefore.X, player.Position.Y));
-                    }
-
-                    _quadTree.Insert(player);
-                }
-            }
-        }
     }
 }
