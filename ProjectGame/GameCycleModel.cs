@@ -9,7 +9,7 @@ public partial class GameCycleModel : IGameModel
 {
     public event EventHandler<GameEventArgs> Updated;
     
-    public int PlayerId { get; set; }
+    public static int PlayerId { get; set; }
     private int _currentId { get; set; }
     public Dictionary<int, IEntity> Entities { get; set; }
     

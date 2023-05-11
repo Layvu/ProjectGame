@@ -13,7 +13,7 @@ public class GameEventArgs : EventArgs //
 public interface IGameModel
 {
     event EventHandler<GameEventArgs> Updated;
-    int PlayerId { get; set; }
+    static int PlayerId { get; set; }
     Dictionary<int, IEntity> Entities { get; set; }
 
     public enum Direction : byte

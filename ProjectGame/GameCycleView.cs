@@ -8,21 +8,23 @@ namespace ProjectGame;
 
 public class GameCycleView : Game, IGameView
 {
-    private GraphicsDeviceManager _graphics;
+    private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     
     public event EventHandler<AllMovesEventArgs> PlayerMovesChanged; 
     public event EventHandler<AllMovesEventArgs> CycleFinished;
     
-    public Texture2D _playerImage;
-
     private Vector2 _visualShift = Vector2.Zero;
     
     private Dictionary<int, IEntity> _entities = new();
     private readonly Dictionary<int, Texture2D> _textures = new();
+    private readonly Dictionary<int, Animation> _animations = new();
 
+    private int _playerId;
+    
     public void LoadRenderingParameters(Dictionary<int, IEntity> entities, Vector2 visualShift)
     {
+        _playerId = GameCycleModel.PlayerId;
         _entities = entities;
         _visualShift += visualShift;
     }
@@ -38,7 +40,6 @@ public class GameCycleView : Game, IGameView
     {
         base.Initialize();
         
-        // TODO: Add your initialization logic here
         var adapter = GraphicsAdapter.DefaultAdapter;
         _graphics.PreferredBackBufferWidth = adapter.CurrentDisplayMode.Width;
         _graphics.PreferredBackBufferHeight = adapter.CurrentDisplayMode.Height;
@@ -53,19 +54,24 @@ public class GameCycleView : Game, IGameView
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        // TODO: use this.Content to load your game content here
         
-        _textures.Add((byte)GameCycleModel.EntityTypes.Player, Content.Load<Texture2D>("player"));
+        _textures.Add((byte)GameCycleModel.EntityTypes.Player, Content.Load<Texture2D>("spritesPlayer"));
         _textures.Add((byte)GameCycleModel.EntityTypes.Wall, Content.Load<Texture2D>("wall"));
+        
+        LoadAnimations();
     }
+
 
     protected override void Update(GameTime gameTime)
     {
+        foreach (var animation in _animations.Values) animation.Update(gameTime);
+        
         var keysState = Keyboard.GetState();
         var keysPressed = keysState.GetPressedKeys();
-        
+
         var directions = new List<IGameModel.Direction>();
 
+        var playerAnimation = _animations[_playerId];
         foreach (var key in keysPressed)
         {
             switch (key)
@@ -78,24 +84,40 @@ public class GameCycleView : Game, IGameView
                     break;
                 case Keys.A:
                     directions.Add(IGameModel.Direction.Left);
+                    playerAnimation.SetCurrentFrameY(5);
                     break;
                 case Keys.D:
                     directions.Add(IGameModel.Direction.Right);
+                    playerAnimation.SetCurrentFrameY(7);
                     break;
             }
         }
-        
+
         if (directions.Count > 0)
         {
-            var allDirections = directions.ToArray();
-
-            PlayerMovesChanged.Invoke(this, new AllMovesEventArgs { Direction = allDirections });
+            playerAnimation.SetLastFrameY(playerAnimation.CurrentFrame.Y);
+            
+            PlayerMovesChanged?.Invoke(this, new AllMovesEventArgs { Direction = directions.ToArray() });
         }
+        else
+        {
+            playerAnimation.SetCurrentFrameX(0);
 
+            if (playerAnimation.LastFrameY > 4) playerAnimation.SetCurrentFrameY(playerAnimation.LastFrameY - 4);
+            else playerAnimation.SetCurrentFrameY(0);
+        }
+        
         base.Update(gameTime);
-        CycleFinished.Invoke(this, new AllMovesEventArgs { gameTime = gameTime}); // UpdateLogic
+        CycleFinished?.Invoke(this, new AllMovesEventArgs { gameTime = gameTime });
     }
 
+    private void LoadAnimations()
+    {
+        var playerAnimation = new Animation(new Point(8, 10), 100, 46, 50);
+        playerAnimation.SetLastFrameY(0);
+        _animations.Add(_playerId, playerAnimation);
+    }
+    
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -105,8 +127,23 @@ public class GameCycleView : Game, IGameView
         foreach (var entity in _entities.Values)
         {
             var texture = _textures[entity.ImageId];
-            var centerPosition = entity.Position - new Vector2(texture.Width, texture.Height) / 2;
-            _spriteBatch.Draw(texture, centerPosition - _visualShift, Color.White);
+            if (_animations.ContainsKey(entity.Id))
+            {
+                var animation = _animations[entity.Id];
+                
+                var centerPosition = entity.Position 
+                                     - new Vector2(animation.FrameWidth, animation.FrameHeight) / 2;
+                
+                _spriteBatch.Draw(texture, centerPosition - _visualShift, new Rectangle(
+                        animation.CurrentFrame.X * animation.FrameWidth, 
+                        animation.CurrentFrame.Y * animation.FrameHeight, 
+                        animation.FrameWidth, animation.FrameHeight), Color.White);
+            }
+            else
+            {
+                var centerPosition = entity.Position - new Vector2(texture.Width, texture.Height) / 2;
+                _spriteBatch.Draw(texture, centerPosition - _visualShift, Color.White);
+            }
         }
 
         _spriteBatch.End();
