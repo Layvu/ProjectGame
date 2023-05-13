@@ -9,7 +9,7 @@ public class Player : IEntity, ISolid
         Position = position;
         Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 39, 50);
         HasGravity = true;
-        Mass = 3f;
+        Mass = 2f;
         Speed = 0.7f;
         JumpMaxTime = 0.2f;
         JumpTime = 0f;

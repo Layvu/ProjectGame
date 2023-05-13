@@ -47,8 +47,8 @@ public class GameCycleView : Game, IGameView
         _graphics.ApplyChanges();
 
         //начало координат 
-        _visualShift.X -= _graphics.PreferredBackBufferWidth / 2;
-        _visualShift.Y -= _graphics.PreferredBackBufferHeight * 0.87f;
+        _visualShift.X -= adapter.CurrentDisplayMode.Width / 2;
+        _visualShift.Y -= adapter.CurrentDisplayMode.Height - 100;
     }
 
     protected override void LoadContent()
@@ -120,7 +120,7 @@ public class GameCycleView : Game, IGameView
     
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(new Color(64, 39, 13)); //CornflowerBlue
 
         _spriteBatch.Begin();
         

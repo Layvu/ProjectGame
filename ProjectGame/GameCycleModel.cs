@@ -13,7 +13,7 @@ public partial class GameCycleModel : IGameModel
     private int _currentId { get; set; }
     public Dictionary<int, IEntity> Entities { get; set; }
     
-    private char[,] _map;
+    private EntityTypes[,] _map;
     private readonly int _tileSize = 50;
 
     private readonly int _screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
@@ -26,7 +26,10 @@ public partial class GameCycleModel : IGameModel
     public GameCycleModel()
     {
         Entities = new Dictionary<int, IEntity>();
-        _map = GenerateMap();
+        var mapWidth = _screenWidth * 5 / _tileSize;
+        var mapHeight = _screenHeight * 5 / _tileSize;
+        _map = new RecursiveBacktrackerMapGenerator(mapWidth, mapHeight, 4).GenerateMap();
+        
         _quadTree = new QuadTree(new Rectangle(0, 0, 
                 _map.GetLength(0) * _tileSize, 
                 _map.GetLength(1) * _tileSize)
@@ -36,7 +39,8 @@ public partial class GameCycleModel : IGameModel
     public enum EntityTypes : byte
     {
         Player = 1,
-        Wall
+        Wall,
+        Empty
     }
     
     public void ChangesPlayerMoves(IGameModel.Direction[] directions)
@@ -66,29 +70,6 @@ public partial class GameCycleModel : IGameModel
         player.Moving *= player.Friction;
     }
     
-    private char[,] GenerateMap() // в отдельный класс-генератор
-    {
-        var mapWidth = _screenWidth / _tileSize;
-        var mapHeight = _screenHeight / _tileSize;
-        var map = new char[mapWidth, mapHeight];
-
-        // границы
-        map[mapWidth / 2, mapHeight - 2] = 'P';
-        map[mapWidth / 2 + 5, mapHeight - 5] = 'W';
-        for (var x = 0; x < mapWidth; x++)
-        {
-            map[x, 0] = 'W';
-            map[x, mapHeight - 1] = 'W';
-        }
-        for (var y = 0; y < mapHeight; y++)
-        {
-            map[0, y] = 'W';
-            map[mapWidth - 1, y] = 'W';
-        }
-        
-        return map;
-    }
-
     public void Initialize()
     {
         _currentId = 1;
@@ -97,12 +78,11 @@ public partial class GameCycleModel : IGameModel
         for (var x = 0; x < _map.GetLength(0); x++)
         for (var y = 0; y < _map.GetLength(1); y++)
         {
-            if (_map[x, y] == '\0') continue;
+            if (_map[x, y] == EntityTypes.Empty) continue; // \0
 
             var generatedEntity = GenerateObject(_map[x, y], x, y);
             
-            // игрок лишь один, запомним Id
-            if (_map[x, y] == 'P' && !isPlacedPlayer)
+            if (_map[x, y] == EntityTypes.Player && !isPlacedPlayer)
             {
                 PlayerId = _currentId;
                 isPlacedPlayer = true;
@@ -124,43 +104,6 @@ public partial class GameCycleModel : IGameModel
                 Entities[PlayerId].Position.Y)
         });
 
-    }
-
-    private IEntity GenerateObject (char name, int xTile, int yTile)
-    {
-        float currentX = xTile * _tileSize;
-        float currentY = yTile * _tileSize;
-        
-        switch (name)
-        {
-            case 'P':
-                return CreatePlayer(currentX, currentY, EntityTypes.Player);
-            case 'W':
-                return CreateWall(currentX, currentY, EntityTypes.Wall);
-            default:
-                return null;
-        }
-    }
-
-    private static Player CreatePlayer (float x, float y, EntityTypes spriteId)
-    {
-        var player = new Player(new Vector2(x, y)) //
-        {
-            ImageId = (byte)spriteId,
-            Moving = new Vector2(0, 0),
-            Friction = 0.9f
-        };
-        return player;
-    }
-
-    private static Wall CreateWall(float x, float y, EntityTypes spriteId)
-    {
-        var wall = new Wall(new Vector2(x, y)) //
-        {
-            ImageId = (byte)spriteId,
-            Moving = new Vector2(0, 0)
-        };
-        return wall;
     }
 
     public void UpdateLogic(GameTime gameTime)
