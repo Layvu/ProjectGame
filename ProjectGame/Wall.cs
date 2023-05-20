@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 namespace ProjectGame;
 
-public class Wall : IEntity, ISolid
+public class Wall : ISolid
 {
     public Wall(Vector2 position)
     {
@@ -18,18 +19,17 @@ public class Wall : IEntity, ISolid
     public RectangleCollider Collider { get; set; }
     public int Id { get; set; } 
     public float Mass { get; }
-    public bool HasGravity { get; } 
-    
-    public void Update()
-    {
-    }
-
-    public void Move(Vector2 pos)
-    {
-    }
+    public bool HasGravity { get; }
     
     public void MoveCollider(Vector2 newPosition)
     {
         Collider = new RectangleCollider((int)newPosition.X, (int)newPosition.Y, 50, 50);
+    }
+    public void Move(Vector2 pos) {}
+    public void Update() {}
+
+    public void TryUpdate(Dictionary<int, IEntity> entities)
+    {
+        Update();
     }
 }

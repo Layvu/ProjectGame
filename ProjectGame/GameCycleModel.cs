@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -19,9 +20,9 @@ public partial class GameCycleModel : IGameModel
     private readonly int _screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
     private readonly int _screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
     
-    private readonly QuadTree _quadTree;
+    private static QuadTree _quadTree;
 
-    private GameTime CurrentGameTime;
+    private static GameTime CurrentGameTime;
     
     public GameCycleModel()
     {
@@ -78,7 +79,7 @@ public partial class GameCycleModel : IGameModel
         for (var x = 0; x < _map.GetLength(0); x++)
         for (var y = 0; y < _map.GetLength(1); y++)
         {
-            if (_map[x, y] == EntityTypes.Empty) continue; // \0
+            if (_map[x, y] == EntityTypes.Empty) continue;
 
             var generatedEntity = GenerateObject(_map[x, y], x, y);
             
@@ -111,19 +112,12 @@ public partial class GameCycleModel : IGameModel
         CurrentGameTime = gameTime;
         
         var playerInitialPosition = Entities[PlayerId].Position;
-        var positionsBeforeUpdate = new Dictionary<int, Vector2>();
-
-        foreach (var entityId in Entities.Keys)
-        {
-            var initialPosition = Entities[entityId].Position;
-            positionsBeforeUpdate.Add(entityId, initialPosition);
-
-            UpdateGravity(entityId);
-
-            Entities[entityId].Update();
-        }
         
-        HandleCollisions(positionsBeforeUpdate);
+        foreach (var entity in Entities.Values)
+        {
+            if (entity is ISolid solid) solid.TryUpdate(Entities);
+            else entity.Update();
+        }
 
         Updated.Invoke(this, new GameEventArgs
         {

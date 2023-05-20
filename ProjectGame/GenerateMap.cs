@@ -28,7 +28,7 @@ public class RecursiveBacktrackerMapGenerator
         
         var startCell = new Point(
             Random.Next(3 * PassageWidth / 2, Width - 3 * PassageWidth / 2), 
-            Random.Next(3 * PassageWidth / 2, Height)
+            Random.Next(3 * PassageWidth / 2, Height - 3 * PassageWidth / 2)
             );
         
         Map[startCell.X, startCell.Y] = GameCycleModel.EntityTypes.Empty;
@@ -101,6 +101,6 @@ public class RecursiveBacktrackerMapGenerator
         return x >= 3 * PassageWidth / 2
                && x < Width - 3 * PassageWidth / 2
                && y >= 3 * PassageWidth / 2
-               && y < Height;
+               && y < Height - 3 * PassageWidth / 2;
     }
 }

@@ -104,7 +104,7 @@ public class GameCycleView : Game, IGameView
             playerAnimation.SetCurrentFrameX(0);
 
             if (playerAnimation.LastFrameY > 4) playerAnimation.SetCurrentFrameY(playerAnimation.LastFrameY - 4);
-            else playerAnimation.SetCurrentFrameY(0);
+            else playerAnimation.SetCurrentFrameY(playerAnimation.LastFrameY);
         }
         
         base.Update(gameTime);
@@ -114,7 +114,7 @@ public class GameCycleView : Game, IGameView
     private void LoadAnimations()
     {
         var playerAnimation = new Animation(new Point(8, 10), 100, 46, 50);
-        playerAnimation.SetLastFrameY(0);
+        playerAnimation.SetLastFrameY(7);
         _animations.Add(_playerId, playerAnimation);
     }
     

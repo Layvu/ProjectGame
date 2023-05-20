@@ -1,8 +1,9 @@
-using Microsoft.Xna.Framework;
+using System.Collections.Generic;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace ProjectGame;
 
-public class Player : IEntity, ISolid
+public class Player : ISolid
 {
     public Player(Vector2 position)
     {
@@ -27,11 +28,16 @@ public class Player : IEntity, ISolid
     public float JumpTime { get; set; }
     public float JumpMaxTime { get; set; }
     public float Speed { get; set; }
-    public float JumpSpeed { get; set; } 
+    public float JumpSpeed { get; set; }
 
     public void AddJumpTime(float deltaTime)
     {
         if (JumpTime <= JumpMaxTime) JumpTime += deltaTime;
+    }
+    
+    public void MoveCollider(Vector2 newPosition)
+    {
+        Collider = new RectangleCollider((int)newPosition.X, (int)newPosition.Y, 39, 50);
     }
 
     public void Update()
@@ -42,11 +48,13 @@ public class Player : IEntity, ISolid
         Move(Position + Moving);
     }
 
-    public void MoveCollider(Vector2 newPosition)
+    public void TryUpdate(Dictionary<int, IEntity> CurrentEntities)
     {
-        Collider = new RectangleCollider((int)newPosition.X, (int)newPosition.Y, 39, 50);
+        GameCycleModel.UpdateGravity(this);
+        GameCycleModel.HandleCollisions(CurrentEntities[Id] as ISolid);
+        Update();
     }
-    
+
     public void Move(Vector2 newPosition)
     {
         Position = newPosition;

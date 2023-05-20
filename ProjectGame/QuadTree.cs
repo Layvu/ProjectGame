@@ -1,4 +1,3 @@
-#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +19,7 @@ public class QuadTree
         _bucketCapacity = bucketCapacity;
         _maxDepth = maxDepth;
      
-        Bounds = bounds; // игровая область на экране
+        Bounds = bounds; // границы карты
     }
 
     private Rectangle Bounds { get; }
@@ -35,14 +34,31 @@ public class QuadTree
         if (element == null || !Bounds.Contains(element.Collider.Boundary))
             throw new ArgumentNullException();
 
-        // узел, превышающий допустимую емкость, будет разбит
+        if (Contains(element)) return;
+        
         if (_elements.Count >= _bucketCapacity) Split();
 
-        var containingChild = GetContainingChild(element.Collider.Boundary);
-        
+        var containingChild = GetContainingChild(element);
+
         if (containingChild == null) _elements.Add(element);
         else containingChild.Insert(element);
     }
+
+    private bool Contains(ISolid element)
+    {
+        if (_elements.Contains(element)) return true;
+
+        if (!IsLeaf)
+        {
+            return _topLeft.Contains(element) 
+                   || _topRight.Contains(element)
+                   || _bottomLeft.Contains(element) 
+                   || _bottomRight.Contains(element);
+        }
+
+        return false;
+    }
+
 
     private void Split()
     {  
@@ -56,7 +72,7 @@ public class QuadTree
         var elements = _elements.ToList();
         foreach (var element in elements)
         {
-            var containingChild = GetContainingChild(element.Collider.Boundary);
+            var containingChild = GetContainingChild(element);
             if (containingChild != null) // если помещается
             {   
                 _elements.Remove(element);
@@ -79,7 +95,7 @@ public class QuadTree
     {
         if (element == null) throw new ArgumentNullException();
 
-        var containingChild = GetContainingChild(element.Collider.Boundary);
+        var containingChild = GetContainingChild(element);
         
         var removed = containingChild?.Remove(element) ?? _elements.Remove(element);
         if (removed && CountElements() <= _bucketCapacity) Merge();
@@ -87,14 +103,14 @@ public class QuadTree
         return removed;
     }
     
-    private QuadTree? GetContainingChild(Rectangle bounds) // IShape
+    private QuadTree? GetContainingChild(ISolid element) // IShape
     {
         if (IsLeaf) return null;
         
-        if (_topLeft.Bounds.Contains(bounds)) return _topLeft;
-        if (_topRight.Bounds.Contains(bounds)) return _topRight;
-        if (_bottomLeft.Bounds.Contains(bounds)) return _bottomLeft;
-        return _bottomRight.Bounds.Contains(bounds) ? _bottomRight : null;
+        if (_topLeft.Bounds.Contains(element.Collider.Boundary)) return _topLeft;
+        if (_topRight.Bounds.Contains(element.Collider.Boundary)) return _topRight;
+        if (_bottomLeft.Bounds.Contains(element.Collider.Boundary)) return _bottomLeft;
+        return _bottomRight.Bounds.Contains(element.Collider.Boundary) ? _bottomRight : null;
     }
 
     private int CountElements() 
@@ -121,28 +137,26 @@ public class QuadTree
  
         _topLeft = _topRight = _bottomLeft = _bottomRight = null;
     }
-    
-    public IEnumerable<ISolid> FindCollisions(ISolid element)
+
+    public IEnumerable<ISolid> FindNearbyObjects(ISolid element)
     {
         if (element == null) throw new ArgumentNullException();
-        
+
         var nodes = new Queue<QuadTree>();
         var collisions = new List<ISolid>();
- 
-        nodes.Enqueue(this); 
- 
+
+        nodes.Enqueue(this);
+
         while (nodes.Count > 0)
         {
             var node = nodes.Dequeue();
- 
+
             if (!element.Collider.Boundary.Intersects(node.Bounds)) continue;
-            
-            collisions.AddRange(
-                node._elements.Where(e => e.Collider.Boundary.Intersects(element.Collider.Boundary))
-                );
+
+            collisions.AddRange(node._elements.Where(e => e != element));
 
             if (node.IsLeaf) continue;
-            
+
             if (element.Collider.Boundary.Intersects(node._topLeft.Bounds))
                 nodes.Enqueue(node._topLeft);
             if (element.Collider.Boundary.Intersects(node._topRight.Bounds))
@@ -152,7 +166,7 @@ public class QuadTree
             if (element.Collider.Boundary.Intersects(node._bottomRight.Bounds))
                 nodes.Enqueue(node._bottomRight);
         }
- 
+
         return collisions;
     }
 }
