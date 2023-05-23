@@ -57,6 +57,9 @@ public class GameCycleView : Game, IGameView
         
         _textures.Add((byte)GameCycleModel.EntityTypes.Player, Content.Load<Texture2D>("spritesPlayer"));
         _textures.Add((byte)GameCycleModel.EntityTypes.Wall, Content.Load<Texture2D>("wall"));
+        _textures.Add((byte)GameCycleModel.EntityTypes.Chest, Content.Load<Texture2D>("chest"));
+        _textures.Add((byte)GameCycleModel.EntityTypes.Heart, Content.Load<Texture2D>("heart"));
+        _textures.Add((byte)GameCycleModel.EntityTypes.Ratsbane, Content.Load<Texture2D>("ratsbane"));
         
         LoadAnimations();
     }

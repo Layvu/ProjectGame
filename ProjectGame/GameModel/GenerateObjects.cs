@@ -15,6 +15,12 @@ public partial class GameCycleModel
                 return CreatePlayer(currentX, currentY, EntityTypes.Player);
             case EntityTypes.Wall:
                 return CreateWall(currentX, currentY, EntityTypes.Wall);
+            case EntityTypes.Chest:
+                return CreateChest(currentX, currentY, EntityTypes.Chest);
+            case EntityTypes.Heart:
+                return CreateHeart(currentX, currentY, EntityTypes.Heart);
+            case EntityTypes.Ratsbane:
+                return CreateRatsbane(currentX, currentY, EntityTypes.Ratsbane);
             default:
                 return null;
         }
@@ -36,8 +42,34 @@ public partial class GameCycleModel
         var wall = new Wall(new Vector2(x, y)) //
         {
             ImageId = (byte)spriteId,
-            Moving = new Vector2(0, 0)
         };
         return wall;
+    }
+    
+    private static Chest CreateChest(float x, float y, EntityTypes spriteId)
+    {
+        var chest = new Chest(new Vector2(x, y)) //
+        {
+            ImageId = (byte)spriteId,
+        };
+        return chest;
+    }
+    
+    private static Heart CreateHeart(float x, float y, EntityTypes spriteId)
+    {
+        var heart = new Heart(new Vector2(x, y)) //
+        {
+            ImageId = (byte)spriteId,
+        };
+        return heart;
+    }
+    
+    private static Ratsbane CreateRatsbane(float x, float y, EntityTypes spriteId)
+    {
+        var ratsbane = new Ratsbane(new Vector2(x, y)) //
+        {
+            ImageId = (byte)spriteId,
+        };
+        return ratsbane;
     }
 }

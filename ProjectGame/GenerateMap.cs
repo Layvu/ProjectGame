@@ -3,24 +3,26 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using ProjectGame;
 
-public class RecursiveBacktrackerMapGenerator
+public class MapGenerator
 {
     private Random Random { get; }
     private int Width { get; }
     private int Height { get; }
     private int PassageWidth { get; }
     private GameCycleModel.EntityTypes[,] Map { get; }
-    
-    public RecursiveBacktrackerMapGenerator(int width, int height, int passageWidth)
+    private List<(int, int)> EmptyCells { get; }
+
+    public MapGenerator(int width, int height, int passageWidth)
     {
         Random = new Random();
         Width = width;
         Height = height;
         PassageWidth = passageWidth;
         Map = new GameCycleModel.EntityTypes[Width, Height];
+        EmptyCells = new List<(int, int)>();
     }
 
-    public GameCycleModel.EntityTypes[,] GenerateMap()
+    public GameCycleModel.EntityTypes[,] GenerateMap(int chestsCount, int heartsCount, int ratsbaneCount)
     {
         for (var x = 0; x < Width; x++)
         for (var y = 0; y < Height; y++)
@@ -34,7 +36,11 @@ public class RecursiveBacktrackerMapGenerator
         Map[startCell.X, startCell.Y] = GameCycleModel.EntityTypes.Empty;
 
         VisitCell(startCell);
-
+        
+        GenerateEntity(chestsCount, GameCycleModel.EntityTypes.Chest, PlacementOnlyFloor);
+        GenerateEntity(heartsCount, GameCycleModel.EntityTypes.Heart, PlacementOnlyFloor);
+        GenerateEntity(ratsbaneCount, GameCycleModel.EntityTypes.Ratsbane, PlacementFloorAndCeil);
+        
         Map[startCell.X, startCell.Y] = GameCycleModel.EntityTypes.Player;
         return Map;
     }
@@ -52,7 +58,6 @@ public class RecursiveBacktrackerMapGenerator
                 && Map[neighborX, neighborY] == GameCycleModel.EntityTypes.Wall)
             {
                 var neighborCell = new Point(neighborX, neighborY);
-                Map[neighborX, neighborY] = GameCycleModel.EntityTypes.Empty;
 
                 RemoveWallBetweenCells(cell, neighborCell);
 
@@ -91,10 +96,15 @@ public class RecursiveBacktrackerMapGenerator
         var yMax = Math.Max(cell1.Y, cell2.Y) + PassageWidth / 2;
         
         for (var x = xMin; x <= xMax; x++)
-        for (var y = yMin; y <= yMax; y++) 
-            if (IsWithinBounds(x, y)) Map[x, y] = GameCycleModel.EntityTypes.Empty;
+        for (var y = yMin; y <= yMax; y++)
+        {
+            if (IsWithinBounds(x, y))
+            {
+                Map[x, y] = GameCycleModel.EntityTypes.Empty;
+                EmptyCells.Add((x, y));
+            }
+        }
     }
-
 
     private bool IsWithinBounds(int x, int y)
     {
@@ -103,4 +113,48 @@ public class RecursiveBacktrackerMapGenerator
                && y >= 3 * PassageWidth / 2
                && y < Height - 3 * PassageWidth / 2;
     }
+
+    private void GenerateEntity(int count, GameCycleModel.EntityTypes entity, Func<int, int, bool> PlacementRules)
+    { 
+        var emptyCellsCopy = new List<(int, int)>(EmptyCells);
+        
+        for (var i = 0; i < count; i++)
+        {
+            var isEntitySet = false;
+            while (!isEntitySet)
+            {
+                if (emptyCellsCopy.Count == 0) 
+                    break;
+            
+                var index = Random.Next(emptyCellsCopy.Count);
+                var (x, y) = emptyCellsCopy[index];
+
+                if (PlacementRules(x, y))
+                {
+                    Map[x, y] = entity;
+                    isEntitySet = true;
+                    EmptyCells.RemoveAt(index);
+                }
+                emptyCellsCopy.RemoveAt(index);
+            }
+        }
+    }
+
+    private bool PlacementOnlyFloor(int x, int y)
+    {
+        if (y + 1 >= Map.GetLength(1) 
+            || Map[x, y + 1] != GameCycleModel.EntityTypes.Wall)
+            return false;
+        return true;
+    }
+
+    private bool PlacementFloorAndCeil(int x, int y)
+    {
+        if (y + 1 < Map.GetLength(1) && Map[x, y + 1] == GameCycleModel.EntityTypes.Wall)
+            return true;
+        if (y - 1 >= 0 && Map[x, y - 1] == GameCycleModel.EntityTypes.Wall)
+            return true;
+        return false;
+    }
 }
+

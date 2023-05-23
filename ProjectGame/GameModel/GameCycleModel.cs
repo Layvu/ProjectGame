@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -27,9 +26,13 @@ public partial class GameCycleModel : IGameModel
     public GameCycleModel()
     {
         Entities = new Dictionary<int, IEntity>();
-        var mapWidth = _screenWidth * 5 / _tileSize;
-        var mapHeight = _screenHeight * 5 / _tileSize;
-        _map = new RecursiveBacktrackerMapGenerator(mapWidth, mapHeight, 4).GenerateMap();
+        var mapWidth = _screenWidth * 3 / _tileSize;
+        var mapHeight = _screenHeight * 3 / _tileSize;
+        var chestsCount = 5;
+        var heartsCount = 3;
+        var ratsbaneCount = 30;
+        _map = new MapGenerator(mapWidth, mapHeight, 4)
+            .GenerateMap(chestsCount, heartsCount, ratsbaneCount);
         
         _quadTree = new QuadTree(new Rectangle(0, 0, 
                 _map.GetLength(0) * _tileSize, 
@@ -41,7 +44,10 @@ public partial class GameCycleModel : IGameModel
     {
         Player = 1,
         Wall,
-        Empty
+        Empty,
+        Chest,
+        Heart,
+        Ratsbane
     }
     
     public void ChangesPlayerMoves(IGameModel.Direction[] directions)
