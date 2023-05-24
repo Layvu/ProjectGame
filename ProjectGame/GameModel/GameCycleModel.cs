@@ -8,10 +8,11 @@ namespace ProjectGame;
 public partial class GameCycleModel : IGameModel
 {
     public event EventHandler<GameEventArgs> Updated;
-    
+    public event EventHandler<GameEventArgs> NewMapCreated;
+
     public static int PlayerId { get; set; }
     private int _currentId { get; set; }
-    public Dictionary<int, IEntity> Entities { get; set; }
+    private static Dictionary<int, IEntity> Entities { get; set; }
     
     private EntityTypes[,] _map;
     private readonly int _tileSize = 50;
@@ -22,22 +23,23 @@ public partial class GameCycleModel : IGameModel
     private static QuadTree _quadTree;
 
     private static GameTime CurrentGameTime;
-    
+
+    private static int _chestsCount = 3; // del
+    private static int _heartsCount = 3; // del
+    private static int _ratsbaneCount = 6; // del
+
+    private int MapWidth { get; set; }
+    private int MapHeight { get; set; }
+
     public GameCycleModel()
     {
-        Entities = new Dictionary<int, IEntity>();
-        var mapWidth = _screenWidth * 3 / _tileSize;
-        var mapHeight = _screenHeight * 3 / _tileSize;
-        var chestsCount = 5;
-        var heartsCount = 3;
-        var ratsbaneCount = 30;
-        _map = new MapGenerator(mapWidth, mapHeight, 4)
-            .GenerateMap(chestsCount, heartsCount, ratsbaneCount);
+        // CreateNewLevel();
         
-        _quadTree = new QuadTree(new Rectangle(0, 0, 
-                _map.GetLength(0) * _tileSize, 
-                _map.GetLength(1) * _tileSize)
-            );
+        MapWidth = _screenWidth * 2 / _tileSize;
+        MapHeight = _screenHeight * 2 / _tileSize;
+        
+        _map = new MapGenerator(MapWidth, MapHeight, 4)
+            .GenerateMap(_chestsCount, _heartsCount, _ratsbaneCount);
     }
 
     public enum EntityTypes : byte
@@ -79,7 +81,14 @@ public partial class GameCycleModel : IGameModel
     
     public void Initialize()
     {
-        _currentId = 1;
+        Entities = new Dictionary<int, IEntity>();
+
+        _quadTree = new QuadTree(new Rectangle(0, 0, 
+            MapWidth * _tileSize, 
+            MapHeight * _tileSize)
+        );
+        
+        _currentId = 0;
 
         var isPlacedPlayer = false;
         for (var x = 0; x < _map.GetLength(0); x++)
@@ -103,14 +112,13 @@ public partial class GameCycleModel : IGameModel
                 _quadTree.Insert(generatedSolid);
         }
         
-        Updated.Invoke(this, new GameEventArgs()
+        NewMapCreated?.Invoke(this, new GameEventArgs()
         {
-            Entities = this.Entities,
+            Entities = Entities,
             VisualShift = new Vector2(
                 Entities[PlayerId].Position.X,
                 Entities[PlayerId].Position.Y)
         });
-
     }
 
     public void UpdateLogic(GameTime gameTime)
@@ -124,11 +132,45 @@ public partial class GameCycleModel : IGameModel
             if (entity is ISolid solid) solid.TryUpdate(Entities);
             else entity.Update();
         }
-
-        Updated.Invoke(this, new GameEventArgs
+        
+        var player = (Player)Entities[PlayerId];
+        if (player.Died)
         {
-            Entities = this.Entities,
-            VisualShift = Entities[PlayerId].Position - playerInitialPosition
-        });
+            Initialize();
+        }
+        else if (player.Win)
+        {
+            CreateNewLevel();
+            Initialize();
+        }
+        else
+        {
+            Updated.Invoke(this, new GameEventArgs
+            {
+                Entities = Entities,
+                VisualShift = Entities[PlayerId].Position - playerInitialPosition
+            });
+        }
+    }
+
+    private void CreateNewLevel()
+    {
+        /*
+        _currentLevel.NewLevel()
+        _currentLevel.MapWidth;
+        _currentLevel.MapHeight;
+        _currentLevel.ChestsCount;
+        _currentLevel.HeartsCount;
+        _currentLevel.RatsbaneCount;
+        */
+             
+        MapWidth += MapWidth / 2;
+        MapHeight += MapHeight / 2;
+        _heartsCount += _heartsCount / 2;
+        _heartsCount += _heartsCount / 2; 
+        _ratsbaneCount += _ratsbaneCount / 2;
+
+        _map = new MapGenerator(MapWidth, MapHeight, 4)
+            .GenerateMap(_chestsCount, _heartsCount, _ratsbaneCount);
     }
 }

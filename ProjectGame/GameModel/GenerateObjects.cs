@@ -28,7 +28,7 @@ public partial class GameCycleModel
 
     private static Player CreatePlayer (float x, float y, EntityTypes spriteId)
     {
-        var player = new Player(new Vector2(x, y)) //
+        var player = new Player(new Vector2(x, y), _chestsCount) //
         {
             ImageId = (byte)spriteId,
             Moving = new Vector2(0, 0),

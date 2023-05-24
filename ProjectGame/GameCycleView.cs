@@ -21,12 +21,26 @@ public class GameCycleView : Game, IGameView
     private readonly Dictionary<int, Animation> _animations = new();
 
     private int _playerId;
-    
+
     public void LoadRenderingParameters(Dictionary<int, IEntity> entities, Vector2 visualShift)
     {
         _playerId = GameCycleModel.PlayerId;
         _entities = entities;
         _visualShift += visualShift;
+    }
+
+    public void LoadNewMap(Dictionary<int, IEntity> entities, Vector2 visualShift)
+    {
+        _visualShift = Vector2.Zero;
+        
+        _playerId = GameCycleModel.PlayerId;
+        _entities = entities;
+        _visualShift += visualShift;
+        
+        LoadAnimations();
+        
+        _visualShift.X -= GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width / 2;
+        _visualShift.Y -= 3 * GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height / 4;
     }
 
     public GameCycleView()
@@ -45,10 +59,6 @@ public class GameCycleView : Game, IGameView
         _graphics.PreferredBackBufferHeight = adapter.CurrentDisplayMode.Height;
         _graphics.IsFullScreen = false;
         _graphics.ApplyChanges();
-
-        //начало координат 
-        _visualShift.X -= adapter.CurrentDisplayMode.Width / 2;
-        _visualShift.Y -= adapter.CurrentDisplayMode.Height - 100;
     }
 
     protected override void LoadContent()
@@ -60,8 +70,6 @@ public class GameCycleView : Game, IGameView
         _textures.Add((byte)GameCycleModel.EntityTypes.Chest, Content.Load<Texture2D>("chest"));
         _textures.Add((byte)GameCycleModel.EntityTypes.Heart, Content.Load<Texture2D>("heart"));
         _textures.Add((byte)GameCycleModel.EntityTypes.Ratsbane, Content.Load<Texture2D>("ratsbane"));
-        
-        LoadAnimations();
     }
 
 
@@ -116,6 +124,8 @@ public class GameCycleView : Game, IGameView
 
     private void LoadAnimations()
     {
+        _animations.Clear();
+        
         var playerAnimation = new Animation(new Point(8, 10), 100, 46, 50);
         playerAnimation.SetLastFrameY(7);
         _animations.Add(_playerId, playerAnimation);

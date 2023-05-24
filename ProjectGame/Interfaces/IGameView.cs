@@ -16,5 +16,6 @@ public interface IGameView
     event EventHandler<AllMovesEventArgs> CycleFinished;
     
     void LoadRenderingParameters(Dictionary<int, IEntity> entities, Vector2 visualShift);
+    void LoadNewMap(Dictionary<int, IEntity> entities, Vector2 visualShift);
     void Run();
 }

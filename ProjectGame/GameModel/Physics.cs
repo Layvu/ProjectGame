@@ -24,31 +24,75 @@ public partial class GameCycleModel
         
         foreach (var solid2 in collidingObjects)
         {
-            var player = solid1 as Player;
             if (solid2 is Player) continue;
 
+            var isCollided = true;
             if (solid1.Moving.Y < 0 & IsTouchingBottom(solid1, solid2))
             {
                 solid1.Moving = new Vector2(solid1.Moving.X, 0);
             }
-            
-            if (solid1.Moving.Y > 0 && IsTouchingTop(solid1, solid2))
+            else if (solid1.Moving.Y > 0 && IsTouchingTop(solid1, solid2))
             {
-                player.JumpTime = 0f;
+                if (solid1 is Player player) player.JumpTime = 0f;
+                
                 solid1.Moving = new Vector2(solid1.Moving.X, 0);
             }
-            
             else if ((solid1.Moving.X > 0 && IsTouchingLeft(solid1, solid2)) ||
-                solid1.Moving.X < 0 & IsTouchingRight(solid1, solid2))
+                     solid1.Moving.X < 0 & IsTouchingRight(solid1, solid2))
             {
-                player.JumpTime = 0f;
+                if (solid1 is Player player) player.JumpTime = 0f;
+                
                 solid1.Moving = new Vector2(0, solid1.Moving.Y);
+            }
+            else
+            {
+                isCollided = false;
+            }
+
+            if (isCollided)
+            {
+                if (solid2 is Chest) ChestCollided(solid1, solid2);
+                if (solid2 is Heart) HeartCollided(solid1, solid2);
+                if (solid2 is Ratsbane) RatsbaneCollided(solid1, solid2);
             }
         }
         
         _quadTree.Insert(solid1);
     }
 
+    private static void HeartCollided(ISolid solid1, ISolid heart)
+    {
+        Entities.Remove(heart.Id);
+        _quadTree.Remove(heart);
+        
+        if (solid1 is Player player)
+        {
+            player.IncreaseHealthBar();
+        }
+    }
+    
+    private static void ChestCollided(ISolid solid1, ISolid chest)
+    {
+        Entities.Remove(chest.Id);
+        _quadTree.Remove(chest);
+        
+        if (solid1 is Player player)
+        {
+            player.IncreaseChestBar();
+        }
+    }
+    
+    private static void RatsbaneCollided(ISolid solid1, ISolid ratsbane)
+    {
+        Entities.Remove(ratsbane.Id);
+        _quadTree.Remove(ratsbane);
+        
+        if (solid1 is Player player)
+        {
+            player.DecreaseHealthBar();
+        }
+    }
+    
     private static bool IsTouchingLeft(ISolid solid1, ISolid solid2)
     {
         var boundary1 = solid1.Collider.Boundary;

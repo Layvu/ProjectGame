@@ -5,7 +5,7 @@ namespace ProjectGame;
 
 public class Player : ISolid
 {
-    public Player(Vector2 position)
+    public Player(Vector2 position, int chestCount)
     {
         Position = position;
         Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 39, 50);
@@ -15,6 +15,10 @@ public class Player : ISolid
         JumpMaxTime = 0.2f;
         JumpTime = 0f;
         JumpSpeed = 2f;
+        _healthBar = 3;
+        Win = false;
+        Died = false;
+        MaxChestCount = chestCount;
     }
 
     public int ImageId { get; set; }
@@ -29,6 +33,29 @@ public class Player : ISolid
     public float JumpMaxTime { get; set; }
     public float Speed { get; set; }
     public float JumpSpeed { get; set; }
+    private int _healthBar { get; set; }
+    private int _chestBar { get; set; }
+    public bool Win { get; private set; }
+    public bool Died { get; private set; }
+    
+    private readonly int MaxChestCount;
+
+    public void IncreaseHealthBar()
+    { 
+        if (_healthBar < 3) _healthBar++;
+    }
+    
+    public void DecreaseHealthBar()
+    { 
+        _healthBar--;
+        if (_healthBar == 0) Died = true;
+    }
+    
+    public void IncreaseChestBar()
+    { 
+        _chestBar++;
+        if (_chestBar == MaxChestCount) Win = true;
+    }
 
     public void AddJumpTime(float deltaTime)
     {

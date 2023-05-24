@@ -12,9 +12,8 @@ public class GameEventArgs : EventArgs //
 
 public interface IGameModel
 {
+    event EventHandler<GameEventArgs> NewMapCreated;
     event EventHandler<GameEventArgs> Updated;
-    static int PlayerId { get; set; }
-    Dictionary<int, IEntity> Entities { get; set; }
 
     public enum Direction : byte
     {

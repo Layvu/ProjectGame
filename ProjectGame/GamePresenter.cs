@@ -22,12 +22,14 @@ public class GamePresenter
         _gameModel = gameModel;
         _gameView = gameView;
 
+        _gameModel.NewMapCreated += HandleNewMapCreated;
+
         _gameModel.Updated += ModelViewUpdate;
         
         _gameView.PlayerMovesChanged += ViewModelMovePlayer;
         _gameView.CycleFinished += ViewModelUpdate;
-        
-        _gameModel.Initialize(); //Инициализируем игровой цикл
+
+        _gameModel.Initialize();
     }
 
     private void ViewModelMovePlayer(object sender, AllMovesEventArgs e)
@@ -43,5 +45,10 @@ public class GamePresenter
     private void ModelViewUpdate(object sender, GameEventArgs e)
     {
         _gameView.LoadRenderingParameters(e.Entities, e.VisualShift);
+    }
+    
+    private void HandleNewMapCreated(object sender, GameEventArgs e)
+    {
+        _gameView.LoadNewMap(e.Entities, e.VisualShift);
     }
 }
