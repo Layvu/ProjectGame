@@ -161,6 +161,7 @@ public class GameCycleView : Game, IGameView
             else CenterDraw(texture, entity);
         }
         ChestsStateDraw();
+        LevelStateDraw();
         HeartsStateDraw();
 
         _spriteBatch.End();
@@ -174,6 +175,14 @@ public class GameCycleView : Game, IGameView
         var stateChestsLine = $"Собрано сундуков: {collected} из {total}";
         var positionOnScreen = new Vector2(10f, 55f);
         _spriteBatch.DrawString(SpriteFont, stateChestsLine, positionOnScreen, Color.Wheat);
+    }
+    
+    private void LevelStateDraw()
+    {
+        var level = CurrentGameState.LevelNumber;
+        var stateLevelLine = $"Уровень: {level}";
+        var positionOnScreen = new Vector2(10f, 90f);
+        _spriteBatch.DrawString(SpriteFont, stateLevelLine, positionOnScreen, Color.Wheat);
     }
 
     private void HeartsStateDraw()

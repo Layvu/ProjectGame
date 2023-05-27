@@ -37,10 +37,10 @@ public class MapGenerator
 
         VisitCell(startCell);
         
-        GenerateEntity(chestsCount, GameCycleModel.EntityTypes.Chest, PlacementOnlyFloor);
         GenerateEntity(heartsCount, GameCycleModel.EntityTypes.Heart, PlacementOnlyFloor);
         GenerateEntity(ratsbaneCount, GameCycleModel.EntityTypes.Ratsbane, PlacementFloorAndCeil);
-        
+        GenerateEntity(chestsCount, GameCycleModel.EntityTypes.Chest, PlacementOnlyFloor);
+
         Map[startCell.X, startCell.Y] = GameCycleModel.EntityTypes.Player;
         return Map;
     }
@@ -116,26 +116,30 @@ public class MapGenerator
 
     private void GenerateEntity(int count, GameCycleModel.EntityTypes entity, Func<int, int, bool> PlacementRules)
     { 
-        var emptyCellsCopy = new List<(int, int)>(EmptyCells);
+        var availableCells = new List<(int, int)>(EmptyCells);
         
         for (var i = 0; i < count; i++)
         {
             var isEntitySet = false;
             while (!isEntitySet)
             {
-                if (emptyCellsCopy.Count == 0) 
+                if (availableCells.Count == 0) 
                     break;
             
-                var index = Random.Next(emptyCellsCopy.Count);
-                var (x, y) = emptyCellsCopy[index];
+                var index = Random.Next(availableCells.Count);
+                var (x, y) = availableCells[index];
 
                 if (PlacementRules(x, y))
                 {
                     Map[x, y] = entity;
                     isEntitySet = true;
-                    EmptyCells.RemoveAt(index);
+                    if (index < availableCells.Count) availableCells.RemoveAt(index);
+                    else break;
                 }
-                emptyCellsCopy.RemoveAt(index);
+                if (index < availableCells.Count)
+                {
+                    availableCells.RemoveAt(index);
+                }
             }
         }
     }

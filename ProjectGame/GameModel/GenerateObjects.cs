@@ -6,8 +6,8 @@ public partial class GameCycleModel
 {
     private IEntity GenerateObject (EntityTypes name, int xTile, int yTile)
     {
-        float currentX = xTile * _tileSize;
-        float currentY = yTile * _tileSize;
+        float currentX = xTile * TileSize;
+        float currentY = yTile * TileSize;
         
         switch (name)
         {
@@ -28,7 +28,7 @@ public partial class GameCycleModel
 
     private static Player CreatePlayer (float x, float y, EntityTypes spriteId)
     {
-        var player = new Player(new Vector2(x, y), _chestsCount) //
+        var player = new Player(new Vector2(x, y), CurrentLevel.ChestsTotalCount) //
         {
             ImageId = (byte)spriteId,
             Moving = new Vector2(0, 0),
