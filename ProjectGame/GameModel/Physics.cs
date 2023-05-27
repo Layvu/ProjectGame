@@ -4,19 +4,18 @@ namespace ProjectGame;
 
 public partial class GameCycleModel
 {
-    private const float gravity = 9.8f;
-    
-    public static void UpdateGravity(IEntity currentEntity)
+    private const float GravityForce = 9.8f;
+
+    private void UpdateGravity(IEntity currentEntity)
     {
         if (currentEntity.HasGravity)
         {
-            const float gravity = 9.8f;
-            var deltaTime = (float)CurrentGameTime.ElapsedGameTime.TotalSeconds;
-            currentEntity.Moving += new Vector2(0, gravity) * deltaTime * currentEntity.Mass;
+            var deltaTime = (float)_currentGameTime.ElapsedGameTime.TotalSeconds;
+            currentEntity.Moving += new Vector2(0, GravityForce) * deltaTime * currentEntity.Mass;
         }
     }
 
-    public static void HandleCollisions(ISolid solid1)
+    public void HandleCollisions(ISolid solid1)
     {
         var collidingObjects = _quadTree.FindNearbyObjects(solid1);
         
@@ -60,7 +59,7 @@ public partial class GameCycleModel
         _quadTree.Insert(solid1);
     }
 
-    private static void HeartCollided(ISolid solid1, ISolid heart)
+    private void HeartCollided(ISolid solid1, ISolid heart)
     {
         Entities.Remove(heart.Id);
         _quadTree.Remove(heart);
@@ -71,7 +70,7 @@ public partial class GameCycleModel
         }
     }
     
-    private static void ChestCollided(ISolid solid1, ISolid chest)
+    private void ChestCollided(ISolid solid1, ISolid chest)
     {
         Entities.Remove(chest.Id);
         _quadTree.Remove(chest);
@@ -82,7 +81,7 @@ public partial class GameCycleModel
         }
     }
     
-    private static void RatsbaneCollided(ISolid solid1, ISolid ratsbane)
+    private void RatsbaneCollided(ISolid solid1, ISolid ratsbane)
     {
         Entities.Remove(ratsbane.Id);
         _quadTree.Remove(ratsbane);

@@ -4,10 +4,11 @@ using Microsoft.Xna.Framework;
 
 namespace ProjectGame;
 
-public class GameEventArgs : EventArgs //
+public class GameEventArgs : EventArgs
 {
     public Dictionary<int, IEntity> Entities { get; set; }    
     public Vector2 VisualShift { get; set; }
+    public GameState GameState { get; set; }
 }
 
 public interface IGameModel

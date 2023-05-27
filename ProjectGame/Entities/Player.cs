@@ -1,11 +1,10 @@
-using System.Collections.Generic;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace ProjectGame;
 
 public class Player : ISolid
 {
-    public Player(Vector2 position, int chestCount)
+    public Player(Vector2 position, int initialChestCount)
     {
         Position = position;
         Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 39, 50);
@@ -15,10 +14,10 @@ public class Player : ISolid
         JumpMaxTime = 0.2f;
         JumpTime = 0f;
         JumpSpeed = 2f;
-        _healthBar = 3;
+        HealthBar = 3;
         Win = false;
         Died = false;
-        MaxChestCount = chestCount;
+        MaxInitialChestCount = initialChestCount;
     }
 
     public int ImageId { get; set; }
@@ -33,28 +32,27 @@ public class Player : ISolid
     public float JumpMaxTime { get; set; }
     public float Speed { get; set; }
     public float JumpSpeed { get; set; }
-    private int _healthBar { get; set; }
-    private int _chestBar { get; set; }
+    public  int HealthBar { get; private set; }
+    public int ChestBar { get; private set; }
     public bool Win { get; private set; }
     public bool Died { get; private set; }
-    
-    private readonly int MaxChestCount;
+    public int MaxInitialChestCount { get; }
 
     public void IncreaseHealthBar()
     { 
-        if (_healthBar < 3) _healthBar++;
+        if (HealthBar < 3) HealthBar++;
     }
     
     public void DecreaseHealthBar()
     { 
-        _healthBar--;
-        if (_healthBar == 0) Died = true;
+        HealthBar--;
+        if (HealthBar == 0) Died = true;
     }
     
     public void IncreaseChestBar()
     { 
-        _chestBar++;
-        if (_chestBar == MaxChestCount) Win = true;
+        ChestBar++;
+        if (ChestBar == MaxInitialChestCount) Win = true;
     }
 
     public void AddJumpTime(float deltaTime)
@@ -73,13 +71,6 @@ public class Player : ISolid
         Moving *= Friction;
 
         Move(Position + Moving);
-    }
-
-    public void TryUpdate(Dictionary<int, IEntity> CurrentEntities)
-    {
-        GameCycleModel.UpdateGravity(this);
-        GameCycleModel.HandleCollisions(CurrentEntities[Id] as ISolid);
-        Update();
     }
 
     public void Move(Vector2 newPosition)

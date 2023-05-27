@@ -1,12 +1,5 @@
-using System;
-using Microsoft.Xna.Framework;
-
 namespace ProjectGame;
 
-/// <summary>
-/// Обрабатывает взаимодействие между моделью и представлением,
-/// перенаправляя данные и обновления с одного компонента на другой
-/// </summary>
 public class GamePresenter
 {
     private IGameModel _gameModel;
@@ -22,9 +15,8 @@ public class GamePresenter
         _gameModel = gameModel;
         _gameView = gameView;
 
-        _gameModel.NewMapCreated += HandleNewMapCreated;
-
         _gameModel.Updated += ModelViewUpdate;
+        _gameModel.NewMapCreated += NewMapCreated;
         
         _gameView.PlayerMovesChanged += ViewModelMovePlayer;
         _gameView.CycleFinished += ViewModelUpdate;
@@ -44,11 +36,11 @@ public class GamePresenter
     
     private void ModelViewUpdate(object sender, GameEventArgs e)
     {
-        _gameView.LoadRenderingParameters(e.Entities, e.VisualShift);
+        _gameView.LoadRenderingParameters(e.Entities, e.VisualShift, e.GameState);
     }
     
-    private void HandleNewMapCreated(object sender, GameEventArgs e)
+    private void NewMapCreated(object sender, GameEventArgs e)
     {
-        _gameView.LoadNewMap(e.Entities, e.VisualShift);
+        _gameView.LoadNewMap(e.Entities, e.VisualShift, e.GameState);
     }
 }

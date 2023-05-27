@@ -27,9 +27,4 @@ public class Heart : ISolid
 
     public void Move(Vector2 pos) {}
     public void Update() {}
-
-    public void TryUpdate(Dictionary<int, IEntity> currentEntities)
-    {
-        Update();
-    }
 }

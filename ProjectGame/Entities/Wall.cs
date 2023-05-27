@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 namespace ProjectGame;
@@ -27,9 +26,4 @@ public class Wall : ISolid
     }
     public void Move(Vector2 pos) {}
     public void Update() {}
-
-    public void TryUpdate(Dictionary<int, IEntity> entities)
-    {
-        Update();
-    }
 }
