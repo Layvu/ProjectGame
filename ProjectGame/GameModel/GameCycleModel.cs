@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 
 namespace ProjectGame;
 
@@ -13,30 +12,38 @@ public partial class GameCycleModel : IGameModel
     public static int PlayerId { get; set; }
     private int CurrentId { get; set; }
     private Dictionary<int, IEntity> Entities { get; set; }
-    
-    private EntityTypes[,] _map;
-    private const int TileSize = 50;
-
-    private readonly int _screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-    private readonly int _screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-    
-    private QuadTree _quadTree;
-
-    private GameTime _currentGameTime;
-    private GameState _gameState;
+    private Dictionary<int, IEntity> Buttons { get; set; }
+    private int ScreenWidth { get; } 
+    private int ScreenHeight { get; }
+    private EntityTypes[,] Map { get; set; }
+    private QuadTree QuadTree { get; set; }
+    private GameTime CurrentGameTime { get; set; }
+    private GameState GameState { get; set; }
     private static Level CurrentLevel { get; set; }
+    
+    private const int TileSize = 50;
 
     public GameCycleModel()
     {
-        CurrentLevel = new Level(_screenWidth, _screenHeight, TileSize);
-        _map = CurrentLevel.CurrentMap;
+        ScreenWidth = 1024;
+        ScreenHeight = 768;
+        
+        CurrentLevel = new Level(ScreenWidth, ScreenHeight, TileSize);
+        Map = CurrentLevel.CurrentMap;
+        GameState = new GameState();
         
         Initialize();
     }
 
+    public enum ButtonTypes : byte
+    {
+        StartGame,
+        Exit
+    }
+    
     public enum EntityTypes : byte
     {
-        Player = 1,
+        Player = 2,
         Wall,
         Empty,
         Chest,
@@ -44,6 +51,12 @@ public partial class GameCycleModel : IGameModel
         Ratsbane
     }
     
+    public enum ScreenEntityTypes : byte
+    {
+        HealthBar = 8,
+        MainMenuBackground
+    }
+
     public void ChangesPlayerMoves(IGameModel.Direction[] directions)
     {
         var player = (Player)Entities[PlayerId];
@@ -55,7 +68,7 @@ public partial class GameCycleModel : IGameModel
                 case IGameModel.Direction.Up:
                     if (player.JumpTime <= player.JumpMaxTime)
                     {
-                        var deltaTime = (float)_currentGameTime.ElapsedGameTime.TotalSeconds;
+                        var deltaTime = (float)CurrentGameTime.ElapsedGameTime.TotalSeconds;
                         player.AddJumpTime(deltaTime);
                         player.Moving += new Vector2(0, -player.JumpSpeed);
                     }
@@ -70,26 +83,41 @@ public partial class GameCycleModel : IGameModel
         }
         player.Moving *= player.Friction;
     }
-    
+
     public void Initialize()
     {
-        _gameState = new GameState(CurrentLevel.ChestsTotalCount, CurrentLevel.LevelNumber);
+        switch (GameState.State)
+        {
+            case State.Game:
+                InitializeGame();
+                break;
+            
+            case State.Menu:
+                InitializeMenu();
+                break;
+        }
+    }
+    
+    private void InitializeGame()
+    {
+        GameState = new GameState(CurrentLevel.ChestsTotalCount, CurrentLevel.LevelNumber);
+        
         Entities = new Dictionary<int, IEntity>();
-        _quadTree = new QuadTree(new Rectangle(0, 0, 
+        QuadTree = new QuadTree(new Rectangle(0, 0, 
             CurrentLevel.MapWidth * TileSize, 
             CurrentLevel.MapHeight * TileSize)
         );
         
         CurrentId = 0;
         var isPlacedPlayer = false;
-        for (var x = 0; x < _map.GetLength(0); x++)
-        for (var y = 0; y < _map.GetLength(1); y++)
+        for (var x = 0; x < Map.GetLength(0); x++)
+        for (var y = 0; y < Map.GetLength(1); y++)
         {
-            if (_map[x, y] == EntityTypes.Empty) continue;
+            if (Map[x, y] == EntityTypes.Empty) continue;
 
-            var generatedEntity = GenerateObject(_map[x, y], x, y);
+            var generatedEntity = GenerateObject(Map[x, y], x, y);
             
-            if (_map[x, y] == EntityTypes.Player && !isPlacedPlayer)
+            if (Map[x, y] == EntityTypes.Player && !isPlacedPlayer)
             {
                 PlayerId = CurrentId;
                 isPlacedPlayer = true;
@@ -100,25 +128,41 @@ public partial class GameCycleModel : IGameModel
             CurrentId++;
             
             if (generatedEntity is ISolid generatedSolid)
-                _quadTree.Insert(generatedSolid);
+                QuadTree.Insert(generatedSolid);
         }
 
         var player = Entities[PlayerId] as Player;
-        _gameState.Update(player.ChestBar, player.HealthBar);
+        GameState.Update(player.ChestBar, player.HealthBar);
 
         NewMapCreated?.Invoke(this, new GameEventArgs()
         {
             Entities = Entities,
             VisualShift = new Vector2(
-                Entities[PlayerId].Position.X,
-                Entities[PlayerId].Position.Y),
-            GameState = _gameState
+                player.Position.X,
+                player.Position.Y),
+            GameState = GameState
         });
     }
 
     public void UpdateLogic(GameTime gameTime)
     {
-        _currentGameTime = gameTime;
+        switch (GameState.State)
+        {
+            case State.Game:
+                UpdateGame(gameTime);
+                if (GameState.State == State.Menu)
+                    UpdateMenu();
+                break;
+            
+            case State.Menu:
+                UpdateMenu();
+                break;
+        }
+    }
+
+    private void UpdateGame(GameTime gameTime)
+    {
+        CurrentGameTime = gameTime;
         
         var player = (Player)Entities[PlayerId];
         var playerInitialPosition = Entities[PlayerId].Position;
@@ -126,14 +170,11 @@ public partial class GameCycleModel : IGameModel
         foreach (var entity in Entities.Values)
         {
             UpdateGravity(entity);
-            if (entity is Player)
-            {
-                HandleCollisions(player);
-            }
+            if (entity is Player) HandleCollisions(player);
             entity.Update();
         }
         
-        _gameState.Update(player.ChestBar, player.HealthBar);
+        GameState.Update(player.ChestBar, player.HealthBar);
 
         if (player.Died)
         {
@@ -149,15 +190,33 @@ public partial class GameCycleModel : IGameModel
             Updated?.Invoke(this, new GameEventArgs
             {
                 Entities = Entities,
-                VisualShift = Entities[PlayerId].Position - playerInitialPosition,
-                GameState = _gameState
+                VisualShift = player.Position - playerInitialPosition,
+                GameState = GameState
             });
         }
+    }
+    
+    public void ChangeGameState()
+    { 
+        GameState.State = GameState.State == State.Menu ? State.Game : State.Menu;
+    }
+    
+    public void StartNewGame()
+    {
+        GameState.State = State.Game;
+        RebuildMapThisLevel();
+        Initialize();
     }
 
     private void CreateNewLevel()
     {
         CurrentLevel.NewLevel();
-        _map = CurrentLevel.CurrentMap;
+        Map = CurrentLevel.CurrentMap;
+    }
+    
+    private void RebuildMapThisLevel()
+    {
+        CurrentLevel.RebuildLevel();
+        Map = CurrentLevel.CurrentMap;
     }
 }

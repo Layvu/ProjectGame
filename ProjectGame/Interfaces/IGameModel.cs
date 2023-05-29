@@ -26,4 +26,6 @@ public interface IGameModel
     void ChangesPlayerMoves(Direction[] dir);
     void UpdateLogic(GameTime gameTime);
     void Initialize();
+    void ChangeGameState();
+    void StartNewGame();
 }

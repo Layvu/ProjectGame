@@ -68,6 +68,18 @@
 /processorParam:TextureFormat=Color
 /build:heartForBar.png
 
+#begin mainMenuBackground.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:mainMenuBackground.jpg
+
 #begin ratsbane.png
 /importer:TextureImporter
 /processor:TextureProcessor

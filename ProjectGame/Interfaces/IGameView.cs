@@ -14,7 +14,9 @@ public interface IGameView
 {
     event EventHandler<AllMovesEventArgs> PlayerMovesChanged;
     event EventHandler<AllMovesEventArgs> CycleFinished;
-    
+    event EventHandler ChangedGameState;
+    event EventHandler StartNewGame;
+
     void LoadRenderingParameters(
         Dictionary<int, IEntity> entities, Vector2 visualShift, GameState currentGameState);
     void LoadNewMap(Dictionary<int, IEntity> entities, Vector2 visualShift, GameState gameState);

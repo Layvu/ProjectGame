@@ -10,16 +10,16 @@ public partial class GameCycleModel
     {
         if (currentEntity.HasGravity)
         {
-            var deltaTime = (float)_currentGameTime.ElapsedGameTime.TotalSeconds;
+            var deltaTime = (float)CurrentGameTime.ElapsedGameTime.TotalSeconds;
             currentEntity.Moving += new Vector2(0, GravityForce) * deltaTime * currentEntity.Mass;
         }
     }
 
     public void HandleCollisions(ISolid solid1)
     {
-        var collidingObjects = _quadTree.FindNearbyObjects(solid1);
+        var collidingObjects = QuadTree.FindNearbyObjects(solid1);
         
-        _quadTree.Remove(solid1);
+        QuadTree.Remove(solid1);
         
         foreach (var solid2 in collidingObjects)
         {
@@ -56,13 +56,13 @@ public partial class GameCycleModel
             }
         }
         
-        _quadTree.Insert(solid1);
+        QuadTree.Insert(solid1);
     }
 
     private void HeartCollided(ISolid solid1, ISolid heart)
     {
         Entities.Remove(heart.Id);
-        _quadTree.Remove(heart);
+        QuadTree.Remove(heart);
         
         if (solid1 is Player player)
         {
@@ -73,7 +73,7 @@ public partial class GameCycleModel
     private void ChestCollided(ISolid solid1, ISolid chest)
     {
         Entities.Remove(chest.Id);
-        _quadTree.Remove(chest);
+        QuadTree.Remove(chest);
         
         if (solid1 is Player player)
         {
@@ -84,7 +84,7 @@ public partial class GameCycleModel
     private void RatsbaneCollided(ISolid solid1, ISolid ratsbane)
     {
         Entities.Remove(ratsbane.Id);
-        _quadTree.Remove(ratsbane);
+        QuadTree.Remove(ratsbane);
         
         if (solid1 is Player player)
         {

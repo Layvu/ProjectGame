@@ -10,7 +10,7 @@ public class Level
         
         ChestsTotalCount = 3;
         HeartsCount = 3;
-        RatsbaneCount = 15;
+        RatsbaneCount = 12;
 
         _screenWidth = screenWidth;
         _screenHeight = screenHeight;
@@ -19,8 +19,7 @@ public class Level
         MapWidth = screenWidth * 2 / tileSize;
         MapHeight = screenHeight * 2 / tileSize;
 
-        CurrentMap = new MapGenerator(MapWidth, MapHeight, 4)
-            .GenerateMap(ChestsTotalCount, HeartsCount, RatsbaneCount);
+        RebuildLevel();
     }
 
     private readonly int _screenWidth;
@@ -46,6 +45,11 @@ public class Level
         HeartsCount = (int)Math.Ceiling(HeartsCount * 1.5);
         RatsbaneCount = (int)Math.Ceiling(RatsbaneCount * 1.5);
         
+        RebuildLevel();
+    }
+
+    public void RebuildLevel()
+    {
         CurrentMap = new MapGenerator(MapWidth, MapHeight, 4)
             .GenerateMap(ChestsTotalCount, HeartsCount, RatsbaneCount);
     }
