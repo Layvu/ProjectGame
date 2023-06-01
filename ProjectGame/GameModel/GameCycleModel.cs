@@ -20,8 +20,8 @@ public partial class GameCycleModel : IGameModel
     private GameTime CurrentGameTime { get; set; }
     private GameState GameState { get; set; }
     private static Level CurrentLevel { get; set; }
-    
-    private const int TileSize = 50;
+
+    public const int TileSize = 50;
 
     public GameCycleModel()
     {

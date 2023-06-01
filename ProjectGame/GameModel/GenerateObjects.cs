@@ -4,7 +4,7 @@ namespace ProjectGame;
 
 public partial class GameCycleModel
 {
-    private IEntity GenerateObject (EntityTypes name, int xTile, int yTile)
+    public IEntity GenerateObject (EntityTypes name, int xTile, int yTile)
     {
         float currentX = xTile * TileSize;
         float currentY = yTile * TileSize;
@@ -39,7 +39,7 @@ public partial class GameCycleModel
 
     private static Wall CreateWall(float x, float y, EntityTypes spriteId)
     {
-        var wall = new Wall(new Vector2(x, y)) //
+        var wall = new Wall(new Vector2(x, y))
         {
             ImageId = (byte)spriteId,
         };
@@ -48,7 +48,7 @@ public partial class GameCycleModel
     
     private static Chest CreateChest(float x, float y, EntityTypes spriteId)
     {
-        var chest = new Chest(new Vector2(x, y)) //
+        var chest = new Chest(new Vector2(x, y))
         {
             ImageId = (byte)spriteId,
         };
@@ -57,7 +57,7 @@ public partial class GameCycleModel
     
     private static Heart CreateHeart(float x, float y, EntityTypes spriteId)
     {
-        var heart = new Heart(new Vector2(x, y)) //
+        var heart = new Heart(new Vector2(x, y))
         {
             ImageId = (byte)spriteId,
         };
@@ -66,7 +66,7 @@ public partial class GameCycleModel
     
     private static Ratsbane CreateRatsbane(float x, float y, EntityTypes spriteId)
     {
-        var ratsbane = new Ratsbane(new Vector2(x, y)) //
+        var ratsbane = new Ratsbane(new Vector2(x, y))
         {
             ImageId = (byte)spriteId,
         };
