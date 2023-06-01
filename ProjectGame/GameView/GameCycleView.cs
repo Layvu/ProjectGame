@@ -97,22 +97,6 @@ public partial class GameCycleView : Game, IGameView
         playerAnimation.SetLastFrameY(7);
         Animations.Add(PlayerId, playerAnimation);
     }
-    
-    private void CheckMenuClickableButtons()
-    {
-        if (CurrentGameState.State != State.Menu) return;
-
-        var buttons = Entities.Values.Cast<Button>().ToArray();
-        var buttonExit = buttons[(int)GameCycleModel.ButtonTypes.Exit];
-        var buttonStartGame = buttons[(int)GameCycleModel.ButtonTypes.StartGame];
-        
-        if (buttonExit.IsClicked()) Environment.Exit(0);
-        else if (buttonStartGame.IsClicked())
-        {
-            StartNewGame?.Invoke(this, EventArgs.Empty);
-            buttonStartGame.Clicked();
-        }
-    }
 
     protected override void Update(GameTime gameTime)
     {
@@ -132,6 +116,22 @@ public partial class GameCycleView : Game, IGameView
 
         base.Update(gameTime);
         CycleFinished?.Invoke(this, new AllMovesEventArgs { gameTime = gameTime });
+    }
+    
+    private void CheckMenuClickableButtons()
+    {
+        if (CurrentGameState.State != State.Menu) return;
+
+        var buttons = Entities.Values.Cast<Button>().ToArray();
+        var buttonExit = buttons[(int)GameCycleModel.ButtonTypes.Exit];
+        var buttonStartGame = buttons[(int)GameCycleModel.ButtonTypes.StartGame];
+        
+        if (buttonExit.IsClicked()) Environment.Exit(0);
+        else if (buttonStartGame.IsClicked())
+        {
+            StartNewGame?.Invoke(this, EventArgs.Empty);
+            buttonStartGame.Clicked();
+        }
     }
 
     private void UpdatePlayerActions(Keys[] keysPressed)

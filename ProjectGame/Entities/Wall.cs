@@ -13,7 +13,7 @@ public class Wall : ISolid
     }
     
     public int ImageId { get; set; }
-    public Vector2 Position { get; private set; }
+    public Vector2 Position { get; }
     public Vector2 Moving { get; set; }
     public RectangleCollider Collider { get; set; }
     public int Id { get; set; } 

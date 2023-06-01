@@ -34,8 +34,8 @@ public partial class GameCycleModel
         
         Buttons = new Dictionary<int, IEntity>
         {
-            {0, startGameButton},
-            {1, exitButton}
+            {(int)ButtonTypes.StartGame, startGameButton},
+            {(int)ButtonTypes.Exit, exitButton}
         };
         
         UpdateMenu();
