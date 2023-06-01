@@ -24,7 +24,7 @@ public partial class GameCycleView
         DrawButton(Entities[(int)GameCycleModel.ButtonTypes.Exit] as Button);
         
         _spriteBatch.DrawString(Font, "SuperKladMan",
-            new Vector2(800, (float)_graphics.PreferredBackBufferHeight / 16), Color.White);
+            new Vector2(800, (float)_graphics.PreferredBackBufferHeight / 16), Color.Ivory);
         
         _spriteBatch.DrawString(Font, "Собери все сундуки или умри \nУправление клавишами W, A, D",
             new Vector2(30, (float)_graphics.PreferredBackBufferHeight / 16), Color.Ivory);

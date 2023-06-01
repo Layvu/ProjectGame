@@ -26,11 +26,11 @@ public partial class GameCycleModel
         var startGameButtonPosition = new Vector2(30, 515);
         
         var startGameButton = new Button(7, startGameButtonPosition, 300, 
-            40, "Start new game", 0, Color.White);
+            40, "Start new game", 0, Color.Ivory);
         
         var exitButton = new Button(
             8, startGameButtonPosition + new Vector2(0, 80), 
-            80, 40, "Exit", 1, Color.White);
+            80, 40, "Exit", 1, Color.Ivory);
         
         Buttons = new Dictionary<int, IEntity>
         {

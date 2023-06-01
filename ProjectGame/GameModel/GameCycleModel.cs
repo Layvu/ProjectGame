@@ -170,10 +170,14 @@ public partial class GameCycleModel : IGameModel
         foreach (var entity in Entities.Values)
         {
             UpdateGravity(entity);
-            if (entity is Player) HandleCollisions(player);
+
+            if (entity.Id == PlayerId) continue;
             entity.Update();
         }
         
+        HandleCollisions(player);
+        player.Update();
+
         GameState.Update(player.ChestBar, player.HealthBar);
 
         if (player.Died)

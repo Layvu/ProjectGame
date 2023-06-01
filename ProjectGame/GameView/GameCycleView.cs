@@ -69,7 +69,7 @@ public partial class GameCycleView : Game, IGameView
 
         _graphics.PreferredBackBufferWidth = ScreenWidth;
         _graphics.PreferredBackBufferHeight = ScreenHeight;
-        _graphics.IsFullScreen = true;
+        _graphics.IsFullScreen = false;
         _graphics.ApplyChanges();
     }
 

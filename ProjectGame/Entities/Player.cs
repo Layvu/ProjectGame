@@ -7,7 +7,7 @@ public class Player : ISolid
     public Player(Vector2 position, int initialChestCount)
     {
         Position = position;
-        Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 39, 50);
+        Collider = new RectangleCollider((int)Position.X, (int)Position.Y, 46, 50);
         HasGravity = true;
         Mass = 2f;
         Speed = 0.7f;
@@ -62,7 +62,7 @@ public class Player : ISolid
     
     public void MoveCollider(Vector2 newPosition)
     {
-        Collider = new RectangleCollider((int)newPosition.X, (int)newPosition.Y, 39, 50);
+        Collider = new RectangleCollider((int)newPosition.X, (int)newPosition.Y, 46, 50);
     }
 
     public void Update()
